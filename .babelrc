@@ -1,0 +1,14 @@
+{
+  "presets": [
+    [
+      "env",
+      {
+        "targets": {
+          "browsers": ["last 4 versions", "ie >= 11"]
+        },
+      }
+    ],
+    "react",
+    "stage-0",
+  ]
+}

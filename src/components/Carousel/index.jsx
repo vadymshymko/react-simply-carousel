@@ -11,11 +11,13 @@ class ReactJSSimpleCarousel extends Component {
       show: PropTypes.bool,
       className: PropTypes.string,
       children: PropTypes.node,
+      disableOnEnd: PropTypes.bool,
     }),
     nextBtn: PropTypes.shape({
       show: PropTypes.bool,
       className: PropTypes.string,
       children: PropTypes.node,
+      disableOnEnd: PropTypes.bool,
     }),
     inner: PropTypes.shape({
       className: PropTypes.string,
@@ -25,8 +27,8 @@ class ReactJSSimpleCarousel extends Component {
       style: PropTypes.object,
     }),
     item: PropTypes.shape({
-      className: PropTypes.string,
       activeClassName: PropTypes.string,
+      activeStyle: PropTypes.object,
     }),
     dotsNav: PropTypes.shape({
       show: PropTypes.bool,
@@ -37,6 +39,14 @@ class ReactJSSimpleCarousel extends Component {
       }),
       disableActiveItem: PropTypes.bool,
     }),
+    speed: PropTypes.number,
+    delay: PropTypes.number,
+    easing: PropTypes.string,
+    autoplay: PropTypes.bool,
+    autoplayDirection: PropTypes.oneOf([
+      'left',
+      'right',
+    ]),
     activeSlideIndex: PropTypes.number,
     onRequestChange: PropTypes.func,
   }
@@ -44,27 +54,25 @@ class ReactJSSimpleCarousel extends Component {
   static defaultProps = {
     children: null,
     className: '',
-    prevBtn: {
-      show: false,
-    },
-    nextBtn: {
-      show: false,
-    },
+    prevBtn: {},
+    nextBtn: {},
     inner: {
       className: '',
     },
     itemsList: {
       className: '',
       style: {},
+      activeStyle: {},
     },
     item: {
-      className: '',
       activeClassName: '',
     },
-    dotsNav: {
-      show: false,
-      disableActiveItem: true,
-    },
+    dotsNav: {},
+    speed: 0,
+    delay: 0,
+    easing: 'linear',
+    autoplay: false,
+    autoplayDirection: 'right',
     onRequestChange: () => {},
     activeSlideIndex: 0,
   }
@@ -79,6 +87,8 @@ class ReactJSSimpleCarousel extends Component {
 
     this.itemsListTransition = null;
     this.isItemsListTransitionDisabled = false;
+
+    this.isSlideMoving = false;
   }
 
   state = {
@@ -100,12 +110,20 @@ class ReactJSSimpleCarousel extends Component {
     document.removeEventListener('touchend', this.handleItemsListMoveEnd);
   }
 
+  getLastSlideIndex = () => {
+    const {
+      children,
+    } = this.props;
+
+    return Children.count(children) - 1;
+  }
+
   getValidatedSlideIndex = slideIndex => (
     Math.max(
       0,
       Math.min(
         slideIndex,
-        Children.count(this.props.children) - 1,
+        this.getLastSlideIndex(),
       ),
     )
   )
@@ -155,29 +173,46 @@ class ReactJSSimpleCarousel extends Component {
       activeSlideIndex,
     } = this.props;
 
-    const slideIndex = this.slides.reduce((prev, current, index) => {
-      const offset = (-this.getItemsListOffsetBySlideIndex(index));
+    const slideIndex = this.slides.reduce((result, item, index) => {
+      const itemOffset = -(this.getItemsListOffsetBySlideIndex(index));
+      const itemStartPos = itemOffset + (item.offsetWidth / 2);
+      const itemEndPos = itemOffset - (item.offsetWidth / 2);
 
-      if (Math.abs(offset - listOffset) < Math.abs(prev.offset - listOffset)) {
-        return {
-          offset,
-          index,
-        };
+      if (listOffset <= itemStartPos && listOffset >= itemEndPos) {
+        return index;
       }
 
-      return prev;
-    }, {
-      index: activeSlideIndex,
-      offset: (-this.getItemsListOffsetBySlideIndex(activeSlideIndex)),
-    }).index;
+      return result;
+    }, activeSlideIndex);
 
     return this.getValidatedSlideIndex(slideIndex);
   }
 
+  getAutoplayNextSlideIndex = () => {
+    const {
+      autoplayDirection,
+      activeSlideIndex,
+    } = this.props;
+
+    if (autoplayDirection === 'left') {
+      return activeSlideIndex - 1;
+    }
+
+    return activeSlideIndex + 1;
+  }
+
   handleInitializationEnd = () => {
+    const {
+      autoplay,
+    } = this.props;
+
     this.setState(() => ({
       isInitialized: true,
-    }));
+    }), () => {
+      if (autoplay) {
+        this.startAutoplay();
+      }
+    });
   }
 
   handleListMouseDown = (event) => {
@@ -191,10 +226,13 @@ class ReactJSSimpleCarousel extends Component {
   }
 
   handleDocumentMouseMove = (event) => {
+    this.isSlideMoving = true;
     this.handleItemsListMove(event.clientX);
   }
 
   handleListTouchStart = (event) => {
+    event.preventDefault();
+
     this.disableItemsListTransition();
 
     this.mouseXPos = event.touches[0].clientX;
@@ -205,12 +243,14 @@ class ReactJSSimpleCarousel extends Component {
   }
 
   handleDocumentTouchMove = (event) => {
+    this.isSlideMoving = true;
     this.handleItemsListMove(event.touches[0].clientX);
   }
 
   handleItemsListMove = (mousePos) => {
     const {
       activeSlideIndex,
+      autoplay,
     } = this.props;
 
     const currentItemsListOffset = this.getItemsListOffsetBySlideIndex(activeSlideIndex);
@@ -218,10 +258,26 @@ class ReactJSSimpleCarousel extends Component {
 
     const nexwItemsListOffset = (-currentItemsListOffset) + (mousePos - this.mouseXPos);
 
+    if (autoplay) {
+      clearTimeout(this.autoplayTimer);
+    }
+
     this.itemsList.style.marginLeft = `${Math.max(Math.min(0, nexwItemsListOffset), (-maxItemsListOffset))}px`;
   }
 
-  handleItemsListMoveEnd = () => {
+  handleItemsListMoveEnd = (event) => {
+    if (this.isSlideMoving) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    this.isSlideMoving = false;
+
+    const {
+      activeSlideIndex,
+      autoplay,
+    } = this.props;
+
     const itemsListOffset = parseInt(this.itemsList.style.marginLeft, 10);
     const slideIndexByListOffset = this.getSlideIndexByListOffset(itemsListOffset);
 
@@ -234,10 +290,14 @@ class ReactJSSimpleCarousel extends Component {
 
     this.enableItemsListTransition();
 
-    if (slideIndexByListOffset !== this.props.activeSlideIndex) {
+    if (slideIndexByListOffset !== activeSlideIndex) {
       this.props.onRequestChange(slideIndexByListOffset);
     } else {
       this.itemsList.style.marginLeft = `-${this.getItemsListOffsetBySlideIndex(slideIndexByListOffset)}px`;
+    }
+
+    if (autoplay) {
+      this.startAutoplay();
     }
   }
 
@@ -248,30 +308,52 @@ class ReactJSSimpleCarousel extends Component {
   }
 
   handlePrevBtnClick = () => {
-    this.goToSlide(this.props.activeSlideIndex - 1);
+    const {
+      autoplay,
+      activeSlideIndex,
+    } = this.props;
+
+    if (autoplay) {
+      clearTimeout(this.autoplayTimer);
+    }
+
+    this.goToSlide(activeSlideIndex - 1);
   }
 
   handleNextBtnClick = () => {
-    this.goToSlide(this.props.activeSlideIndex + 1);
+    const {
+      autoplay,
+      activeSlideIndex,
+    } = this.props;
+
+    if (autoplay) {
+      clearTimeout(this.autoplayTimer);
+    }
+
+    this.goToSlide(activeSlideIndex + 1);
   }
 
   goToSlide = (slideIndex) => {
     const {
       activeSlideIndex,
+      autoplay,
+      speed,
+      delay,
     } = this.props;
 
+    const lastSlideIndex = this.getLastSlideIndex();
     const validatedSlideIndex = this.getValidatedSlideIndex(slideIndex);
 
-    const nextItemsListOffset = this.getItemsListOffsetBySlideIndex(validatedSlideIndex);
-    const currentItemsListOffset = (
-      this.getItemsListOffsetBySlideIndex(activeSlideIndex)
-    );
-
-    if (
-      (validatedSlideIndex !== activeSlideIndex)
-      && (nextItemsListOffset !== currentItemsListOffset)
-    ) {
+    if (validatedSlideIndex !== activeSlideIndex) {
       this.props.onRequestChange(validatedSlideIndex);
+
+      if (autoplay && validatedSlideIndex !== lastSlideIndex) {
+        this.autoplayTimer = setTimeout(() => {
+          this.goToSlide(this.getAutoplayNextSlideIndex());
+        }, speed + delay);
+      } else if (autoplay) {
+        clearTimeout(this.autoplayTimer);
+      }
     }
   }
 
@@ -292,23 +374,39 @@ class ReactJSSimpleCarousel extends Component {
     }
   }
 
+  startAutoplay = () => {
+    const {
+      activeSlideIndex,
+      autoplay,
+      delay,
+    } = this.props;
+
+    if (autoplay && activeSlideIndex !== this.getLastSlideIndex()) {
+      this.autoplayTimer = setTimeout(() => {
+        this.goToSlide(this.getAutoplayNextSlideIndex());
+      }, delay);
+    }
+  }
+
   render() {
     const {
       className,
       prevBtn: {
-        show: showPrevBtn,
+        show: showPrevBtn = false,
         className: prevBtnClassName = '',
         children: prevBtnChildren = null,
+        disableOnEnd: disablePrevBtnOnEnd,
         ...prevBtnProps
       } = {},
       nextBtn: {
-        show: showNextBtn,
+        show: showNextBtn = false,
         className: nextBtnClassName = '',
         children: nextBtnChildren = null,
+        disableOnEnd: disableNextBtnOnEnd,
         ...nextBtnProps
       } = {},
       inner: {
-        className: innerClassName,
+        className: innerClassName = '',
         ...innerProps
       },
       itemsList: {
@@ -318,10 +416,11 @@ class ReactJSSimpleCarousel extends Component {
       },
       item: {
         activeClassName: activeItemClassName = '',
+        activeStyle: activeItemStyle = {},
         ...itemProps
       },
       dotsNav: {
-        show: showDotsNav,
+        show: showDotsNav = false,
         className: dotsNavClassName = '',
         disableActiveItem: disableActiveDotsNavItem = true,
         item: {
@@ -331,12 +430,19 @@ class ReactJSSimpleCarousel extends Component {
         } = {},
         ...dotsNavProps
       },
+      speed,
+      delay,
+      easing,
       children,
       onRequestChange,
       activeSlideIndex,
+      autoplay,
+      autoplayDirection,
       ...containerProps
     } = this.props;
 
+    const itemsCount = Children.count(children);
+    const lastSlideIndex = this.getLastSlideIndex();
     const validatedActiveSlideIndex = this.getValidatedSlideIndex(activeSlideIndex);
 
     const itemsListOffset = this.state.isInitialized
@@ -360,6 +466,7 @@ class ReactJSSimpleCarousel extends Component {
             `}
             onClick={this.handlePrevBtnClick}
             {...prevBtnProps}
+            disabled={disablePrevBtnOnEnd && activeSlideIndex === 0}
           >
             {prevBtnChildren}
           </button>
@@ -374,6 +481,9 @@ class ReactJSSimpleCarousel extends Component {
             className={`${styles.ReactJSSimpleCarousel__itemsList} ${listClassName}`}
             style={{
               ...listStyle,
+              transition: (speed || delay) && easing
+                ? `margin ${speed}ms ${easing} ${delay}ms`
+                : null,
               marginLeft: itemsListOffset,
             }}
             {...itemsListProps}
@@ -386,7 +496,8 @@ class ReactJSSimpleCarousel extends Component {
 
             {Children.map(children, ({
               props: {
-                className: itemClassName,
+                className: itemClassName = '',
+                style: itemStyle = {},
                 role,
                 ...itemComponentProps
               },
@@ -401,6 +512,13 @@ class ReactJSSimpleCarousel extends Component {
                     : ''
                   }
                 `,
+                style: {
+                  ...itemStyle,
+                  ...(index === activeSlideIndex
+                    ? activeItemStyle
+                    : {}
+                  ),
+                },
                 role: 'tabpanel',
                 ...itemProps,
                 ...itemComponentProps,
@@ -426,7 +544,7 @@ class ReactJSSimpleCarousel extends Component {
               ref={(node) => { this.dotsNav = node; }}
             >
 
-              {Array.from({ length: Children.count(children) }).map((item, index) => (
+              {Array.from({ length: itemsCount }).map((item, index) => (
                 <button
                   className={`
                     ${styles.ReactJSSimpleCarousel__dotsNavItem}
@@ -457,6 +575,7 @@ class ReactJSSimpleCarousel extends Component {
               ${nextBtnClassName}
             `}
             onClick={this.handleNextBtnClick}
+            disabled={disableNextBtnOnEnd && activeSlideIndex === lastSlideIndex}
             {...nextBtnProps}
           >
             {nextBtnChildren}

@@ -52,8 +52,16 @@ class App extends Component {
               transition: "margin .4s",
             }
           }}
+          item={{
+            activeStyle: {
+              backgroundColor: "red",
+            },
+          }}
           activeSlideIndex={this.state.activeSlideIndex}
           onRequestChange={this.goToSlide}
+          speed={1000}
+          delay={1000}
+          easing={'linear'}
         >
           {Array.from({ length: 10 }).map((item, index) => (
             <div
@@ -64,6 +72,9 @@ class App extends Component {
                 border: "30px solid #fff",
                 backgroundColor: "#000",
                 color: "#fff",
+              }}
+              onClick={() => {
+                this.goToSlide(index);
               }}
               key={index}
             >

@@ -39,6 +39,7 @@ class ReactJSSimpleCarousel extends Component {
       }),
       disableActiveItem: PropTypes.bool,
     }),
+    itemsToShow: PropTypes.number,
     speed: PropTypes.number,
     delay: PropTypes.number,
     easing: PropTypes.string,
@@ -68,6 +69,7 @@ class ReactJSSimpleCarousel extends Component {
       activeClassName: '',
     },
     dotsNav: {},
+    itemsToShow: null,
     speed: 0,
     delay: 0,
     easing: 'linear',
@@ -411,7 +413,11 @@ class ReactJSSimpleCarousel extends Component {
       },
       itemsList: {
         className: listClassName,
-        style: listStyle,
+        style: {
+          minWidth: listMinWidth = null,
+          width: listWidth = null,
+          ...listStyle
+        },
         ...itemsListProps
       },
       item: {
@@ -430,6 +436,7 @@ class ReactJSSimpleCarousel extends Component {
         } = {},
         ...dotsNavProps
       },
+      itemsToShow,
       speed,
       delay,
       easing,
@@ -448,6 +455,14 @@ class ReactJSSimpleCarousel extends Component {
     const itemsListOffset = this.state.isInitialized
       ? `-${this.getItemsListOffsetBySlideIndex(validatedActiveSlideIndex)}px`
       : this.getItemsListOffsetFromDOM();
+
+    const itemsListWidthByItemsToShow = itemsToShow
+      ? `${(100 * itemsCount) / itemsToShow}%`
+      : null;
+
+    const itemWidthByItemsToShow = itemsToShow
+      ? `${100 / itemsCount}%`
+      : null;
 
     this.slides = [];
 
@@ -481,10 +496,12 @@ class ReactJSSimpleCarousel extends Component {
             className={`${styles.ReactJSSimpleCarousel__itemsList} ${listClassName}`}
             style={{
               ...listStyle,
-              transition: (speed || delay) && easing
+              transition: (speed || delay)
                 ? `margin ${speed}ms ${easing} ${delay}ms`
                 : null,
               marginLeft: itemsListOffset,
+              minWidth: itemsListWidthByItemsToShow || listMinWidth,
+              width: itemsListWidthByItemsToShow || listWidth,
             }}
             {...itemsListProps}
             onTouchStart={this.handleListTouchStart}
@@ -497,7 +514,10 @@ class ReactJSSimpleCarousel extends Component {
             {Children.map(children, ({
               props: {
                 className: itemClassName = '',
-                style: itemStyle = {},
+                style: {
+                  width: itemWidth = null,
+                  ...itemStyle
+                },
                 role,
                 ...itemComponentProps
               },
@@ -518,6 +538,7 @@ class ReactJSSimpleCarousel extends Component {
                     ? activeItemStyle
                     : {}
                   ),
+                  width: itemWidthByItemsToShow || itemWidth,
                 },
                 role: 'tabpanel',
                 ...itemProps,

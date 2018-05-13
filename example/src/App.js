@@ -47,11 +47,6 @@ class App extends Component {
               minWidth: "60px",
             }
           }}
-          itemsList={{
-            style: {
-              transition: "margin .4s",
-            }
-          }}
           item={{
             activeStyle: {
               backgroundColor: "red",
@@ -62,6 +57,7 @@ class App extends Component {
           speed={1000}
           delay={1000}
           easing={'linear'}
+          itemsToShow={2}
         >
           {Array.from({ length: 10 }).map((item, index) => (
             <div

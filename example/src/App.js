@@ -70,7 +70,7 @@ class App extends Component {
                 color: "#fff",
               }}
               onClick={() => {
-                this.goToSlide(index);
+                console.log('item click');
               }}
               key={index}
             >

@@ -63,10 +63,10 @@ class ReactJSSimpleCarousel extends Component {
     itemsList: {
       className: '',
       style: {},
-      activeStyle: {},
     },
     item: {
       activeClassName: '',
+      activeStyle: {},
     },
     dotsNav: {},
     itemsToShow: null,
@@ -83,14 +83,14 @@ class ReactJSSimpleCarousel extends Component {
     super(props);
 
     this.slides = [];
-    this.mouseXPos = null;
-
-    this.resizeTimer = null;
 
     this.itemsListTransition = null;
     this.isItemsListTransitionDisabled = false;
 
+    this.resizeTimer = null;
+
     this.isSlideMoving = false;
+    this.slideMovingStartMouseXPos = null;
   }
 
   state = {
@@ -154,9 +154,29 @@ class ReactJSSimpleCarousel extends Component {
     );
   }
 
+  getItemsListOffsetByMousePos = (mousePos) => {
+    const {
+      activeSlideIndex,
+    } = this.props;
+
+    const itemsListOffsetByActiveSlideIndex = this.getItemsListOffsetBySlideIndex(activeSlideIndex);
+    const itemsListOffsetByMousePos = (
+      (mousePos - this.slideMovingStartMouseXPos) - itemsListOffsetByActiveSlideIndex
+    );
+    const maxItemsListOffset = this.getMaxItemsListOffset();
+
+    return Math.max(
+      Math.min(0, itemsListOffsetByMousePos),
+      (-maxItemsListOffset),
+    );
+  }
+
   getMaxItemsListOffset = () => {
     if (this.itemsList && this.inner) {
-      return (this.itemsList.offsetWidth - this.inner.offsetWidth);
+      return Math.max(
+        0,
+        this.itemsList.offsetWidth - this.inner.offsetWidth,
+      );
     }
 
     return 0;
@@ -164,10 +184,10 @@ class ReactJSSimpleCarousel extends Component {
 
   getItemsListOffsetFromDOM = () => {
     if (this.itemsList) {
-      return this.itemsList.style.marginLeft;
+      return parseInt(this.itemsList.dataset.position || 0, 10);
     }
 
-    return null;
+    return 0;
   }
 
   getSlideIndexByListOffset = (listOffset) => {
@@ -218,88 +238,105 @@ class ReactJSSimpleCarousel extends Component {
   }
 
   handleListMouseDown = (event) => {
+    event.preventDefault();
+
+    this.slideMovingStartMouseXPos = event.clientX;
+
     this.disableItemsListTransition();
 
-    this.mouseXPos = event.clientX;
-
     document.addEventListener('mousemove', this.handleDocumentMouseMove);
-    document.addEventListener('mouseup', this.handleItemsListMoveEnd);
-    document.addEventListener('dragstart', this.handleItemsListMoveEnd);
+    document.addEventListener('mouseup', this.handleItemsListMouseUp);
   }
 
   handleDocumentMouseMove = (event) => {
+    event.preventDefault();
+
     this.isSlideMoving = true;
+
     this.handleItemsListMove(event.clientX);
+  }
+
+  handleItemsListMouseUp = (event) => {
+    event.preventDefault();
+
+    document.removeEventListener('mousemove', this.handleDocumentMouseMove);
+    document.removeEventListener('mouseup', this.handleItemsListMouseUp);
+
+    if (this.isSlideMoving) {
+      if (!(event.target === this.container || this.container.contains(event.target))) {
+        this.isSlideMoving = false;
+      }
+
+      this.handleItemsListMoveEnd(event.clientX);
+    }
   }
 
   handleListTouchStart = (event) => {
     event.preventDefault();
 
+    this.slideMovingStartMouseXPos = event.touches[0].clientX;
+
     this.disableItemsListTransition();
 
-    this.mouseXPos = event.touches[0].clientX;
-
     document.addEventListener('touchmove', this.handleDocumentTouchMove);
-    document.addEventListener('touchend', this.handleItemsListMoveEnd);
-    document.addEventListener('dragstart', this.handleItemsListMoveEnd);
+    document.addEventListener('touchend', this.handleItemsListTouchEnd);
   }
 
   handleDocumentTouchMove = (event) => {
+    event.preventDefault();
+
     this.isSlideMoving = true;
+
     this.handleItemsListMove(event.touches[0].clientX);
+  }
+
+  handleItemsListTouchEnd = (event) => {
+    event.preventDefault();
+
+    document.removeEventListener('touchmove', this.handleDocumentTouchMove);
+    document.removeEventListener('touchend', this.handleItemsListMoveEnd);
+
+    if (this.isSlideMoving) {
+      if (!(event.target === this.container || this.container.contains(event.target))) {
+        this.isSlideMoving = false;
+      }
+
+      this.handleItemsListMoveEnd(event.touches[0].clientX);
+    }
   }
 
   handleItemsListMove = (mousePos) => {
     const {
-      activeSlideIndex,
       autoplay,
     } = this.props;
 
-    const currentItemsListOffset = this.getItemsListOffsetBySlideIndex(activeSlideIndex);
-    const maxItemsListOffset = this.getMaxItemsListOffset();
-
-    const nexwItemsListOffset = (-currentItemsListOffset) + (mousePos - this.mouseXPos);
+    const newItemsListOffset = this.getItemsListOffsetByMousePos(mousePos);
 
     if (autoplay) {
       clearTimeout(this.autoplayTimer);
     }
 
-    this.itemsList.style.marginLeft = `${Math.max(Math.min(0, nexwItemsListOffset), (-maxItemsListOffset))}px`;
+    this.itemsList.dataset.position = newItemsListOffset;
+    this.itemsList.style.transform = `translateX(${newItemsListOffset}px)`;
   }
 
-  handleItemsListMoveEnd = (event) => {
-    if (this.isSlideMoving) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
+  handleItemsListMoveEnd = (mousePos) => {
+    const newItemsListOffset = this.getItemsListOffsetByMousePos(mousePos);
+    const slideIndexByListOffset = this.getSlideIndexByListOffset(newItemsListOffset);
 
-    this.isSlideMoving = false;
-
-    const {
-      activeSlideIndex,
-      autoplay,
-    } = this.props;
-
-    const itemsListOffset = parseInt(this.itemsList.style.marginLeft, 10);
-    const slideIndexByListOffset = this.getSlideIndexByListOffset(itemsListOffset);
-
-    document.removeEventListener('mousemove', this.handleDocumentMouseMove);
-    document.removeEventListener('mouseup', this.handleItemsListMoveEnd);
-    document.removeEventListener('touchmove', this.handleDocumentTouchMove);
-    document.removeEventListener('touchend', this.handleItemsListMoveEnd);
-
-    this.mouseXPos = null;
+    this.slideMovingStartMouseXPos = null;
 
     this.enableItemsListTransition();
 
-    if (slideIndexByListOffset !== activeSlideIndex) {
-      this.props.onRequestChange(slideIndexByListOffset);
-    } else {
-      this.itemsList.style.marginLeft = `-${this.getItemsListOffsetBySlideIndex(slideIndexByListOffset)}px`;
-    }
+    this.goToSlide(slideIndexByListOffset);
+  }
 
-    if (autoplay) {
-      this.startAutoplay();
+  handleContainerClick = (event) => {
+    if (this.isSlideMoving) {
+      this.isSlideMoving = false;
+
+      event.preventDefault();
+      event.stopPropagation();
     }
   }
 
@@ -356,6 +393,9 @@ class ReactJSSimpleCarousel extends Component {
       } else if (autoplay) {
         clearTimeout(this.autoplayTimer);
       }
+    } else {
+      this.itemsList.dataset.position = -this.getItemsListOffsetBySlideIndex(validatedSlideIndex);
+      this.itemsList.style.transform = `translateX(${-this.getItemsListOffsetBySlideIndex(validatedSlideIndex)}px)`;
     }
   }
 
@@ -470,6 +510,7 @@ class ReactJSSimpleCarousel extends Component {
       <div
         className={`${styles.ReactJSSimpleCarousel} ${className}`}
         {...containerProps}
+        onClickCapture={this.handleContainerClick}
         ref={(node) => { this.container = node; }}
       >
         {showPrevBtn && (
@@ -497,15 +538,16 @@ class ReactJSSimpleCarousel extends Component {
             style={{
               ...listStyle,
               transition: (speed || delay)
-                ? `margin ${speed}ms ${easing} ${delay}ms`
+                ? `transform ${speed}ms ${easing} ${delay}ms`
                 : null,
-              marginLeft: itemsListOffset,
+              transform: `translateX(${itemsListOffset})`,
               minWidth: itemsListWidthByItemsToShow || listMinWidth,
               width: itemsListWidthByItemsToShow || listWidth,
             }}
             {...itemsListProps}
             onTouchStart={this.handleListTouchStart}
             onMouseDown={this.handleListMouseDown}
+            data-position={itemsListOffset}
             tabIndex="-1"
             role="presentation"
             ref={(node) => { this.itemsList = node; }}
@@ -538,6 +580,7 @@ class ReactJSSimpleCarousel extends Component {
                     ? activeItemStyle
                     : {}
                   ),
+                  margin: 0,
                   width: itemWidthByItemsToShow || itemWidth,
                 },
                 role: 'tabpanel',

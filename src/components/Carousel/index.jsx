@@ -84,6 +84,7 @@ class ReactJSSimpleCarousel extends Component {
 
     this.slides = [];
 
+    this.itemsListPosition = 0;
     this.itemsListTransition = null;
     this.isItemsListTransitionDisabled = false;
 
@@ -177,14 +178,6 @@ class ReactJSSimpleCarousel extends Component {
         0,
         this.itemsList.offsetWidth - this.inner.offsetWidth,
       );
-    }
-
-    return 0;
-  }
-
-  getItemsListOffsetFromDOM = () => {
-    if (this.itemsList) {
-      return parseInt(this.itemsList.dataset.position || 0, 10);
     }
 
     return 0;
@@ -316,7 +309,7 @@ class ReactJSSimpleCarousel extends Component {
       clearTimeout(this.autoplayTimer);
     }
 
-    this.itemsList.dataset.position = newItemsListOffset;
+    this.itemsListPosition = newItemsListOffset;
     this.itemsList.style.transform = `translateX(${newItemsListOffset}px)`;
   }
 
@@ -394,7 +387,7 @@ class ReactJSSimpleCarousel extends Component {
         clearTimeout(this.autoplayTimer);
       }
     } else {
-      this.itemsList.dataset.position = -this.getItemsListOffsetBySlideIndex(validatedSlideIndex);
+      this.itemsListPosition = -this.getItemsListOffsetBySlideIndex(validatedSlideIndex);
       this.itemsList.style.transform = `translateX(${-this.getItemsListOffsetBySlideIndex(validatedSlideIndex)}px)`;
     }
   }
@@ -494,7 +487,7 @@ class ReactJSSimpleCarousel extends Component {
 
     const itemsListOffset = this.state.isInitialized
       ? `-${this.getItemsListOffsetBySlideIndex(validatedActiveSlideIndex)}px`
-      : this.getItemsListOffsetFromDOM();
+      : this.itemsListPosition;
 
     const itemsListWidthByItemsToShow = itemsToShow
       ? `${(100 * itemsCount) / itemsToShow}%`
@@ -547,7 +540,6 @@ class ReactJSSimpleCarousel extends Component {
             {...itemsListProps}
             onTouchStart={this.handleListTouchStart}
             onMouseDown={this.handleListMouseDown}
-            data-position={itemsListOffset}
             tabIndex="-1"
             role="presentation"
             ref={(node) => { this.itemsList = node; }}
@@ -559,10 +551,10 @@ class ReactJSSimpleCarousel extends Component {
                 style: {
                   width: itemWidth = null,
                   ...itemStyle
-                },
+                } = {},
                 role,
                 ...itemComponentProps
-              },
+              } = {},
               ...slideComponentData
             }, index) => ({
               props: {

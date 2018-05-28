@@ -69,9 +69,6 @@ class App extends Component {
                 backgroundColor: "#000",
                 color: "#fff",
               }}
-              onClick={() => {
-                console.log('item click');
-              }}
               key={index}
             >
               {index}

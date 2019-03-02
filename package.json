@@ -6,6 +6,7 @@
   "files": [
     "./dist"
   ],
+  "unpkg": "./dist/index.js",
   "module": "src/index.js",
   "sideEffects": false,
   "scripts": {

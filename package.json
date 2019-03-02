@@ -1,5 +1,5 @@
 {
-  "name": "reactjs-simple-carousel",
+  "name": "react-simply-carousel",
   "version": "1.0.0",
   "description": "Simple react.js carousel component",
   "main": "dist/index.js",
@@ -39,9 +39,9 @@
   "author": "Vadym Shymko <vadymshymko@gmail.com>",
   "license": "SEE LICENSE IN <LICENSE>",
   "bugs": {
-    "url": "https://github.com/vadymshymko/reactjs-simple-carousel/issues"
+    "url": "https://github.com/vadymshymko/react-simply-carousel/issues"
   },
-  "homepage": "https://github.com/vadymshymko/reactjs-simple-carousel#readme",
+  "homepage": "https://github.com/vadymshymko/react-simply-carousel#readme",
   "dependencies": {
     "@babel/runtime": "^7.3.4",
     "prop-types": "^15.6.2",

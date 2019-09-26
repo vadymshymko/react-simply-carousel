@@ -45,10 +45,16 @@ module.exports = {
         exclude: /node_modules/,
       },
       {
-        test: /\.css/,
+        test: /\.less/,
         use: [
           'style-loader',
-          'css-loader',
+          {
+            loader: 'css-loader',
+            options: {
+              modules: true,
+            },
+          },
+          'less-loader',
           'postcss-loader',
         ],
       },

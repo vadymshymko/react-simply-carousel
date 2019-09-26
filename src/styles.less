@@ -1,0 +1,26 @@
+.ReactJSSimpleCarousel {
+  box-sizing: border-box;
+
+  &::before,
+  &::after,
+  * {
+    box-sizing: inherit;
+  }
+
+  &__inner {
+    display: flex;
+    flex-flow: row wrap;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  &__itemsList {
+    display: flex;
+    outline: none;
+  }
+
+  &__dotsNav {
+    text-align: center;
+    width: 100%;
+  }
+}

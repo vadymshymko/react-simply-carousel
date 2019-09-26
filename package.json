@@ -83,6 +83,8 @@
     "eslint-plugin-react": "^7.14.2",
     "husky": "^3.0.5",
     "jest": "^24.9.0",
+    "less": "^3.10.3",
+    "less-loader": "^5.0.0",
     "lint-staged": "^9.4.0",
     "postcss-loader": "^3.0.0",
     "style-loader": "^1.0.0",

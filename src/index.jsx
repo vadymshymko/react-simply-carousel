@@ -1,7 +1,7 @@
 import React, { Component, Children, createRef } from 'react';
 import PropTypes from 'prop-types';
 
-import styles from './styles.css';
+import styles from './styles.less';
 
 class ReactJSSimpleCarousel extends Component {
   static propTypes = {
@@ -534,7 +534,7 @@ class ReactJSSimpleCarousel extends Component {
           ref={this.innerRef}
         >
           <div
-            className={listClassName}
+            className={`${styles.ReactJSSimpleCarousel__itemsList} ${listClassName}`}
             style={{
               ...listStyle,
               transition:

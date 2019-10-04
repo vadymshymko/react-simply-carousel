@@ -27,37 +27,11 @@ class App extends Component {
         </p>
 
         <Carousel
-          prevBtn={{
-            show: true,
-            children: "Prev",
-            style: {
-              margin: "0 15px",
-              height: "300px",
-              width: "60px",
-              minWidth: "60px",
-            }
-          }}
-          nextBtn={{
-            show: true,
-            children: "Next",
-            style: {
-              margin: "0 15px",
-              height: "300px",
-              width: "60px",
-              minWidth: "60px",
-            }
-          }}
-          item={{
-            activeStyle: {
-              backgroundColor: "red",
-            },
-          }}
           activeSlideIndex={this.state.activeSlideIndex}
           onRequestChange={this.goToSlide}
           speed={1000}
           delay={1000}
           easing={'linear'}
-          itemsToShow={2}
         >
           {Array.from({ length: 10 }).map((item, index) => (
             <div

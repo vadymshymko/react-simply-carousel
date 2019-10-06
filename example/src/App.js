@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, forwardRef } from 'react';
 import Carousel from 'react-simply-carousel';
 import logo from './logo.svg';
 import './App.css';
@@ -36,11 +36,24 @@ class App extends Component {
         <Carousel
           activeSlideIndex={this.state.activeSlideIndex}
           onRequestChange={this.goToSlide}
-          speed={1000}
-          delay={1000}
+          onAfterChange={(currentActiveSlide, prevActiveSlide) => {
+            console.log({
+              currentActiveSlide,
+              prevActiveSlide,
+            });
+          }}
+          updateOnItemClick
+          speed={0}
+          delay={0}
           easing={'linear'}
           itemsToShow={3}
-          itemsToScroll={3}
+          itemsToScroll={1}
+          activeSlideProps={{
+            className: 'active',
+            style: {
+              backgroundColor: 'red'
+            }
+          }}
           forwardBtnProps={{
             children: 'Forward',
             style: {
@@ -77,6 +90,7 @@ class App extends Component {
             }
           ]}
         >
+
           {Array.from({ length: 5 }).map((item, index) => (
             <div
               style={{

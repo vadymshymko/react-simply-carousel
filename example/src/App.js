@@ -44,7 +44,7 @@ class App extends Component {
           }}
           updateOnItemClick
           speed={0}
-          delay={0}
+          delay={500}
           easing={'linear'}
           itemsToShow={3}
           itemsToScroll={1}

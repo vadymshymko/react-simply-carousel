@@ -1,7 +1,8 @@
-import React, { Component } from 'react';
+import React from 'react';
 import Carousel from 'react-simply-carousel';
 import logo from './logo.svg';
 import './App.css';
+
 
 class App extends Component {
   state = {
@@ -19,12 +20,18 @@ class App extends Component {
       <div className="App">
         <header className="App-header">
           <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to React</h1>
-        </header>
-
-        <p className="App-intro">
-          To get started, edit <code>src/App.js</code> and save to reload.
+          <p>
+            Edit <code>src/App.js</code> and save to reload.
         </p>
+          <a
+            className="App-link"
+            href="https://reactjs.org"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Learn React
+        </a>
+        </header>
 
         <Carousel
           activeSlideIndex={this.state.activeSlideIndex}
@@ -54,7 +61,7 @@ class App extends Component {
             {
               maxWidth: 480,
               itemsToShow: 1,
-              
+
               forwardBtnProps: {
                 children: 'For',
                 style: {
@@ -87,7 +94,7 @@ class App extends Component {
           ))}
         </Carousel>
       </div>
-    );
+    )
   }
 }
 

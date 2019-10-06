@@ -32,8 +32,45 @@ class App extends Component {
           speed={1000}
           delay={1000}
           easing={'linear'}
+          itemsToShow={3}
+          itemsToScroll={3}
+          forwardBtnProps={{
+            children: 'Forward',
+            style: {
+              padding: 15,
+            }
+          }}
+          backwardBtnProps={{
+            children: 'Backward',
+            style: {
+              padding: 15,
+            }
+          }}
+          responsiveProps={[
+            {
+              maxWidth: 768,
+              itemsToShow: 3,
+            },
+            {
+              maxWidth: 480,
+              itemsToShow: 1,
+              
+              forwardBtnProps: {
+                children: 'For',
+                style: {
+                  padding: 15,
+                }
+              },
+              backwardBtnProps: {
+                children: 'Back',
+                style: {
+                  padding: 15,
+                }
+              },
+            }
+          ]}
         >
-          {Array.from({ length: 10 }).map((item, index) => (
+          {Array.from({ length: 5 }).map((item, index) => (
             <div
               style={{
                 height: '300px',

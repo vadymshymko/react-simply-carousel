@@ -7,6 +7,7 @@ class ReactJSSimpleCarousel extends Component {
   static propTypes = {
     activeSlideIndex: PropTypes.number.isRequired,
     onRequestChange: PropTypes.func.isRequired,
+
     onAfterChange: PropTypes.func,
     updateOnItemClick: PropTypes.bool,
     children: PropTypes.node,
@@ -16,13 +17,18 @@ class ReactJSSimpleCarousel extends Component {
     autoplay: PropTypes.bool,
     autoplayDirection: PropTypes.oneOf(['forward', 'backward']),
 
+    itemsToShow: PropTypes.number,
+    itemsToScroll: PropTypes.number,
+    hideNavIfAllVisible: PropTypes.bool,
+
     containerProps: PropTypes.objectOf(PropTypes.any),
     innerProps: PropTypes.objectOf(PropTypes.any),
     itemsListProps: PropTypes.objectOf(PropTypes.any),
     activeSlideProps: PropTypes.objectOf(PropTypes.any),
-
     forwardBtnProps: PropTypes.objectOf(PropTypes.any),
     backwardBtnProps: PropTypes.objectOf(PropTypes.any),
+
+    responsiveProps: PropTypes.arrayOf(PropTypes.object),
   };
 
   static defaultProps = {
@@ -35,13 +41,18 @@ class ReactJSSimpleCarousel extends Component {
     autoplay: false,
     autoplayDirection: 'forward',
 
+    itemsToShow: 0,
+    itemsToScroll: 1,
+    hideNavIfAllVisible: true,
+
     containerProps: {},
     innerProps: {},
     itemsListProps: {},
     activeSlideProps: {},
-
     forwardBtnProps: {},
     backwardBtnProps: {},
+
+    responsiveProps: [],
   };
 
   constructor(props) {
@@ -59,7 +70,7 @@ class ReactJSSimpleCarousel extends Component {
     this.slides = [];
 
     this.state = {
-      isInitialized: false,
+      windowWidth: 0,
       positionIndex: props.activeSlideIndex,
     };
   }
@@ -70,9 +81,9 @@ class ReactJSSimpleCarousel extends Component {
     window.addEventListener('resize', this.handleWindowResize);
   }
 
-  componentDidUpdate(prevProps) {
-    const { activeSlideIndex: prevActiveSlideIndex } = prevProps;
-    const { activeSlideIndex } = this.props;
+  componentDidUpdate(prevProps, prevState) {
+    const { activeSlideIndex: prevActiveSlideIndex } = this.getRenderProps(prevState, prevProps);
+    const { activeSlideIndex } = this.renderProps;
 
     if (activeSlideIndex === prevActiveSlideIndex) {
       this.direction = '';
@@ -91,23 +102,69 @@ class ReactJSSimpleCarousel extends Component {
     document.removeEventListener('touchend', this.handleItemsListTouchEnd);
   }
 
-  disableItemsListTransition = () => {
-    this.itemsListRef.current.style.transition = 'none';
-  };
+  getRenderProps = (state, props) => {
+    const { windowWidth } = state;
 
-  enableItemsListTransition = () => {
-    const { speed, delay, easing } = this.props;
+    const { responsiveProps, ...restProps } = props;
 
-    this.itemsListRef.current.style.transition = speed || delay
-      ? `transform ${speed}ms ${easing} ${delay}ms`
-      : null;
-  };
+    if (!windowWidth) {
+      return restProps;
+    }
 
-  getLastSlideIndex = () => {
-    const { children } = this.props;
+    const propsByWindowWidth = responsiveProps.reduce((
+      result,
+      { minWidth = 0, maxWidth = null, ...item } = {},
+    ) => {
+      if (windowWidth > minWidth && (!maxWidth || windowWidth <= maxWidth)) {
+        return {
+          ...result,
+          ...item,
+        };
+      }
 
-    return Children.count(children) - 1;
-  };
+      return result;
+    }, restProps);
+
+    const slidesCount = Children.toArray(propsByWindowWidth.children).length;
+
+    return {
+      ...propsByWindowWidth,
+      activeSlideIndex: Math.max(
+        0,
+        Math.min(
+          propsByWindowWidth.activeSlideIndex,
+          slidesCount - 1,
+        ),
+      ),
+      itemsToShow: Math.min(slidesCount, propsByWindowWidth.itemsToShow),
+      itemsToScroll: Math.min(slidesCount, propsByWindowWidth.itemsToScroll),
+    };
+  }
+
+  getInnerWidth = () => {
+    const { windowWidth } = this.state;
+    const { itemsToShow, activeSlideIndex } = this.renderProps;
+
+    if (!windowWidth || !itemsToShow) {
+      return null;
+    }
+
+    return this.slides.reduce((result, item, index) => {
+      const isItemVisible = (index >= activeSlideIndex && index < activeSlideIndex + itemsToShow)
+        || (
+          index < activeSlideIndex
+          && (
+            index < (activeSlideIndex + itemsToShow - this.slides.length)
+          )
+        );
+
+      if (!isItemVisible) {
+        return result;
+      }
+
+      return result + item.offsetWidth;
+    }, 0);
+  }
 
   getItemsListOffsetBySlideIndex = (slideIndex) => {
     const offsetByIndex = this.slides.reduce((total, item = {}, index) => {
@@ -137,9 +194,12 @@ class ReactJSSimpleCarousel extends Component {
     return 0;
   }
 
-  getSlideItemOnClick = (index, direction, onClick) => {
-    const { activeSlideIndex } = this.props;
-
+  getSlideItemOnClick = ({
+    index,
+    activeSlideIndex,
+    direction,
+    onClick,
+  }) => {
     const slideItemOnClick = (event) => {
       const forwardDirectionValue = activeSlideIndex < index ? 'forward' : '';
       const backwardDirectionValue = activeSlideIndex > index ? 'backward' : '';
@@ -158,22 +218,22 @@ class ReactJSSimpleCarousel extends Component {
   }
 
   getNextSlideIndex = (direction) => {
-    const { activeSlideIndex } = this.props;
+    const { activeSlideIndex, itemsToScroll, children } = this.renderProps;
 
-    const lastSlideIndex = this.getLastSlideIndex();
+    const lastSlideIndex = Children.count(children) - 1;
 
     if (direction === 'forward') {
-      const nextSlideIndex = activeSlideIndex + 1;
+      const nextSlideIndex = activeSlideIndex + itemsToScroll;
       const isOnEnd = nextSlideIndex > lastSlideIndex;
-      const newSlideIndex = isOnEnd ? 0 : nextSlideIndex;
+      const newSlideIndex = isOnEnd ? nextSlideIndex - lastSlideIndex - 1 : nextSlideIndex;
 
       return newSlideIndex;
     }
 
     if (direction === 'backward') {
-      const nextSlideIndex = activeSlideIndex - 1;
+      const nextSlideIndex = activeSlideIndex - itemsToScroll;
       const isOnStart = nextSlideIndex < 0;
-      const newSlideIndex = isOnStart ? lastSlideIndex : nextSlideIndex;
+      const newSlideIndex = isOnStart ? lastSlideIndex + 1 + nextSlideIndex : nextSlideIndex;
 
       return newSlideIndex;
     }
@@ -182,22 +242,34 @@ class ReactJSSimpleCarousel extends Component {
   }
 
   updateActiveSlideIndex = (newActiveSlideIndex, direction) => {
-    const { activeSlideIndex, onRequestChange } = this.props;
+    const {
+      activeSlideIndex,
+      onRequestChange,
+      speed,
+      delay,
+      easing,
+    } = this.renderProps;
 
-    this.enableItemsListTransition();
+    this.itemsListRef.current.style.transition = speed || delay
+      ? `transform ${speed}ms ${easing} ${delay}ms`
+      : null;
 
     if (newActiveSlideIndex !== activeSlideIndex) {
       this.stopAutoplay();
 
       this.direction = direction;
       onRequestChange(newActiveSlideIndex);
+    } else {
+      this.itemsListRef.current.style.transform = `translateX(-${this.itemsListRef.current.offsetWidth / 3}px)`;
     }
   }
 
   startAutoplay = () => {
     const {
-      autoplay, autoplayDirection, delay,
-    } = this.props;
+      autoplay,
+      autoplayDirection,
+      delay,
+    } = this.renderProps;
 
     if (autoplay) {
       this.autoplayTimer = setTimeout(() => {
@@ -212,7 +284,7 @@ class ReactJSSimpleCarousel extends Component {
 
   handleInitializationEnd = () => {
     this.setState(() => ({
-      isInitialized: true,
+      windowWidth: window.innerWidth,
     }), this.startAutoplay);
   };
 
@@ -221,6 +293,19 @@ class ReactJSSimpleCarousel extends Component {
 
     this.resizeTimer = setTimeout(this.handleInitializationEnd, 400);
   };
+
+  handleContainerClickCapture = (event) => {
+    const { containerProps: { onClickCapture: containerOnClickCapture } } = this.renderProps;
+
+    if (this.isListDragging) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (containerOnClickCapture) {
+        containerOnClickCapture(event);
+      }
+    }
+  }
 
   handleBackwardBtnClick = () => {
     this.updateActiveSlideIndex(this.getNextSlideIndex('backward'), 'backward');
@@ -231,7 +316,7 @@ class ReactJSSimpleCarousel extends Component {
   }
 
   handleItemsListTransitionEnd = () => {
-    const { activeSlideIndex, onAfterChange } = this.props;
+    const { activeSlideIndex, onAfterChange } = this.renderProps;
 
     this.setState(() => ({
       positionIndex: activeSlideIndex,
@@ -254,22 +339,14 @@ class ReactJSSimpleCarousel extends Component {
     const maxDragPos = this.itemsListRef.current.offsetWidth - this.innerRef.current.offsetWidth;
     const itemsListPos = Math.max(Math.min(minDragPos, -dragPosDiff), -maxDragPos);
 
-    this.disableItemsListTransition();
-
+    this.itemsListRef.current.style.transition = 'none';
     this.itemsListRef.current.style.transform = `translateX(${itemsListPos}px)`;
   }
 
   handleItemsListDragEnd = (dragPos) => {
-    const { activeSlideIndex } = this.props;
+    const { activeSlideIndex } = this.renderProps;
     const mousePosDiff = this.itemsListDragStartPos - dragPos;
     const activeItemHalfWidth = this.slides[activeSlideIndex].offsetWidth / 2;
-
-    console.log({
-      dragPos,
-      itemsListDragStartPos: this.itemsListDragStartPos,
-      mousePosDiff,
-    });
-
 
     if (mousePosDiff > activeItemHalfWidth) {
       this.updateActiveSlideIndex(this.getNextSlideIndex('forward'), 'forward');
@@ -298,10 +375,12 @@ class ReactJSSimpleCarousel extends Component {
   handleItemsListMouseDown = (event) => {
     this.stopAutoplay();
 
-    this.itemsListDragStartPos = event.clientX;
+    if (!this.isListDragging) {
+      this.itemsListDragStartPos = event.clientX;
 
-    document.addEventListener('mousemove', this.handleItemsListMouseMove);
-    document.addEventListener('mouseup', this.handleItemsListMouseUp);
+      document.addEventListener('mousemove', this.handleItemsListMouseMove);
+      document.addEventListener('mouseup', this.handleItemsListMouseUp);
+    }
   };
 
   handleItemsListTouchMove = (event) => {
@@ -321,13 +400,15 @@ class ReactJSSimpleCarousel extends Component {
   handleItemsListTouchStart = (event) => {
     this.stopAutoplay();
 
-    this.itemsListDragStartPos = event.touches[0].clientX;
+    if (!this.isListDragging) {
+      this.itemsListDragStartPos = event.touches[0].clientX;
 
-    document.addEventListener('touchmove', this.handleItemsListTouchMove);
-    document.addEventListener('touchend', this.handleItemsListTouchEnd);
+      document.addEventListener('touchmove', this.handleItemsListTouchMove);
+      document.addEventListener('touchend', this.handleItemsListTouchEnd);
+    }
   };
 
-  renderSlidesItems = (items, startIndex = 0, direction) => {
+  renderSlidesItems = (items, startIndex) => {
     const {
       updateOnItemClick,
       activeSlideIndex,
@@ -336,7 +417,7 @@ class ReactJSSimpleCarousel extends Component {
         style: activeSlideStyle = {},
         ...activeSlideProps
       },
-    } = this.props;
+    } = this.renderProps;
 
     return (
       items.map((
@@ -351,6 +432,8 @@ class ReactJSSimpleCarousel extends Component {
         },
         index,
       ) => {
+        const direction = this.renderedSlidesCount >= this.slidesCount ? 'forward' : 'backward';
+
         const isActive = index + startIndex === activeSlideIndex;
 
         const className = `${itemClassName} ${isActive ? activeSlideClassName : ''}`;
@@ -361,7 +444,12 @@ class ReactJSSimpleCarousel extends Component {
           margin: 0,
         };
         const onClick = updateOnItemClick
-          ? this.getSlideItemOnClick(index + startIndex, direction, itemOnClick)
+          ? this.getSlideItemOnClick({
+            index: index + startIndex,
+            direction,
+            onClick: itemOnClick,
+            activeSlideIndex,
+          })
           : itemOnClick;
         const props = {
           className,
@@ -370,6 +458,8 @@ class ReactJSSimpleCarousel extends Component {
           ...itemComponentProps,
           ...(isActive ? activeSlideProps : {}),
         };
+
+        this.renderedSlidesCount = this.renderedSlidesCount + 1;
 
         return {
           props: {
@@ -388,19 +478,26 @@ class ReactJSSimpleCarousel extends Component {
   }
 
   render() {
+    this.renderProps = this.getRenderProps(this.state, this.props);
+
     const {
       activeSlideIndex,
       speed,
       delay,
       easing,
       children,
+      hideNavIfAllVisible,
       containerProps: {
         className: containerClassName = '',
-        onClickCapture: containerOnClickCapture = null,
+        onClickCapture: containerOnClickCapture,
         ...containerProps
       },
       innerProps: {
         className: innerClassName = '',
+        style: {
+          width: innerWidthStyle = null,
+          ...innerStyle
+        } = {},
         ...innerProps
       },
       itemsListProps: {
@@ -421,47 +518,47 @@ class ReactJSSimpleCarousel extends Component {
         show: showBackwardBtn = true,
         ...backwardBtnProps
       },
-    } = this.props;
+    } = this.renderProps;
 
-    const { isInitialized, positionIndex } = this.state;
+    const { windowWidth, positionIndex } = this.state;
+
+    const slidesItems = Children.toArray(children);
+
+    const innerWidth = this.getInnerWidth();
+
+    const renderNavBtns = windowWidth && hideNavIfAllVisible
+      ? (this.itemsListRef.current.offsetWidth / 3)
+        > (innerWidth || this.innerRef.current.offsetWidth)
+      : true;
 
     const isNewSLideIndex = (activeSlideIndex - positionIndex) !== 0;
 
-    const positionIndexOffset = isInitialized && isNewSLideIndex
+    const positionIndexOffset = windowWidth && isNewSLideIndex
       ? this.getItemsListOffsetBySlideIndex(positionIndex)
       : 0;
-    const activeSlideIndexOffset = isInitialized && isNewSLideIndex
+    const activeSlideIndexOffset = windowWidth && isNewSLideIndex
       ? this.getItemsListOffsetBySlideIndex(activeSlideIndex)
       : 0;
 
     const itemsListTransition = !isNewSLideIndex || !(speed || delay)
       ? null
       : `transform ${speed}ms ${easing} ${delay}ms`;
-    const itemsListTransform = isInitialized
+    const itemsListTransform = windowWidth
       ? `translateX(-${(activeSlideIndexOffset - positionIndexOffset + this.getOffsetCorrectionForEdgeSlides(activeSlideIndex, positionIndex)) + this.itemsListRef.current.offsetWidth / 3}px)`
       : null;
 
-    const slidesItems = Children.toArray(children);
-
     this.slides = [];
+    this.slidesCount = slidesItems.length;
+    this.renderedSlidesCount = 0;
 
     return (
       <div
         className={`${styles.ReactJSSimpleCarousel} ${containerClassName}`}
-        onClickCapture={(event) => {
-          if (this.isListDragging) {
-            event.preventDefault();
-            event.stopPropagation();
-
-            if (containerOnClickCapture) {
-              containerOnClickCapture(event);
-            }
-          }
-        }}
+        onClickCapture={this.handleContainerClickCapture}
         {...containerProps}
         ref={this.containerRef}
       >
-        {showBackwardBtn && (
+        {showBackwardBtn && renderNavBtns && (
           <button
             {...backwardBtnProps}
             type="button"
@@ -473,6 +570,10 @@ class ReactJSSimpleCarousel extends Component {
 
         <div
           className={`${styles.ReactJSSimpleCarousel__inner} ${innerClassName}`}
+          style={{
+            width: innerWidth ? `${innerWidth}px` : innerWidthStyle,
+            ...innerStyle,
+          }}
           {...innerProps}
           ref={this.innerRef}
         >
@@ -492,15 +593,14 @@ class ReactJSSimpleCarousel extends Component {
             ref={this.itemsListRef}
           >
 
-            {this.renderSlidesItems(slidesItems.slice(positionIndex), positionIndex, 'backward')}
+            {this.renderSlidesItems(slidesItems.slice(positionIndex), positionIndex)}
             {this.renderSlidesItems(slidesItems, 0)}
-            {this.renderSlidesItems(slidesItems, 0, 'forward')}
-            {this.renderSlidesItems(slidesItems.slice(0, positionIndex), 0, 'forward')}
-
+            {this.renderSlidesItems(slidesItems, 0)}
+            {this.renderSlidesItems(slidesItems.slice(0, positionIndex), 0)}
           </div>
         </div>
 
-        {showForwardBtn && (
+        {showForwardBtn && renderNavBtns && (
           <button
             {...forwardBtnProps}
             type="button"

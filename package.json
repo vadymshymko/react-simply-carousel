@@ -1,6 +1,6 @@
 {
   "name": "react-simply-carousel",
-  "version": "1.1.1",
+  "version": "2.0.0",
   "description": "Simple react.js carousel component",
   "main": "dist/index.js",
   "files": [
@@ -39,7 +39,9 @@
     "slider-plugin",
     "carousel-slider",
     "responsive",
-    "touch-enabled"
+    "touch-enabled",
+    "infinite",
+    "responsive-carousel"
   ],
   "author": "Vadym Shymko <vadymshymko@gmail.com>",
   "license": "SEE LICENSE IN <LICENSE>",
@@ -58,7 +60,7 @@
     "@babel/plugin-transform-runtime": "^7.6.2",
     "@babel/preset-env": "^7.6.2",
     "@babel/preset-react": "^7.0.0",
-    "autoprefixer": "^9.6.1",
+    "autoprefixer": "^9.6.4",
     "babel-eslint": "^10.0.3",
     "babel-jest": "^24.9.0",
     "babel-loader": "^8.0.6",
@@ -81,11 +83,11 @@
     "eslint-plugin-jsx-a11y": "^6.2.3",
     "eslint-plugin-prettier": "^3.1.0",
     "eslint-plugin-react": "^7.14.2",
-    "husky": "^3.0.5",
+    "husky": "^3.0.8",
     "jest": "^24.9.0",
     "less": "^3.10.3",
     "less-loader": "^5.0.0",
-    "lint-staged": "^9.4.0",
+    "lint-staged": "^9.4.1",
     "postcss-loader": "^3.0.0",
     "style-loader": "^1.0.0",
     "webpack": "^4.41.0",

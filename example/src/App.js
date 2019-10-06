@@ -3,6 +3,7 @@ import Carousel from 'react-simply-carousel';
 import logo from './logo.svg';
 import './App.css';
 
+
 class App extends Component {
   state = {
     activeSlideIndex: 0,
@@ -19,47 +20,78 @@ class App extends Component {
       <div className="App">
         <header className="App-header">
           <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to React</h1>
+          <p>
+            Edit <code>src/App.js</code> and save to reload.
+        </p>
+          <a
+            className="App-link"
+            href="https://reactjs.org"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Learn React
+        </a>
         </header>
 
-        <p className="App-intro">
-          To get started, edit <code>src/App.js</code> and save to reload.
-        </p>
-
         <Carousel
-          prevBtn={{
-            show: true,
-            children: "Prev",
-            style: {
-              margin: "0 15px",
-              height: "300px",
-              width: "60px",
-              minWidth: "60px",
-            }
-          }}
-          nextBtn={{
-            show: true,
-            children: "Next",
-            style: {
-              margin: "0 15px",
-              height: "300px",
-              width: "60px",
-              minWidth: "60px",
-            }
-          }}
-          item={{
-            activeStyle: {
-              backgroundColor: "red",
-            },
-          }}
           activeSlideIndex={this.state.activeSlideIndex}
           onRequestChange={this.goToSlide}
-          speed={1000}
-          delay={1000}
+          onAfterChange={(currentActiveSlide, prevActiveSlide) => {
+            console.log({
+              currentActiveSlide,
+              prevActiveSlide,
+            });
+          }}
+          updateOnItemClick
+          speed={0}
+          delay={0}
           easing={'linear'}
-          itemsToShow={2}
+          itemsToShow={3}
+          itemsToScroll={1}
+          activeSlideProps={{
+            className: 'active',
+            style: {
+              backgroundColor: 'red'
+            }
+          }}
+          forwardBtnProps={{
+            children: 'Forward',
+            style: {
+              padding: 15,
+            }
+          }}
+          backwardBtnProps={{
+            children: 'Backward',
+            style: {
+              padding: 15,
+            }
+          }}
+          responsiveProps={[
+            {
+              maxWidth: 768,
+              itemsToShow: 3,
+            },
+            {
+              maxWidth: 480,
+              itemsToShow: 1,
+
+              forwardBtnProps: {
+                children: 'For',
+                style: {
+                  padding: 15,
+                }
+              },
+              backwardBtnProps: {
+                children: 'Back',
+                style: {
+                  padding: 15,
+                }
+              },
+            }
+          ]}
         >
-          {Array.from({ length: 10 }).map((item, index) => (
+
+          {Array.from({ length: 5 }).map((item, index) => (
             <div
               style={{
                 height: '300px',
@@ -76,7 +108,7 @@ class App extends Component {
           ))}
         </Carousel>
       </div>
-    );
+    )
   }
 }
 

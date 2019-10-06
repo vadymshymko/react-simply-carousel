@@ -53,15 +53,15 @@ class App extends Component {
         itemsToScroll={3}
       >
         <div style={{ width: 300, height: 300 }}>slide 0</div>
-        <div style={{ width: 350, height: 300 }}>slide 1</div>
-        <div style={{ width: 400, height: 300 }}>slide 2</div>
-        <div style={{ width: 450, height: 300 }}>slide 3</div>
-        <div style={{ width: 500, height: 300 }}>slide 4</div>
-        <div style={{ width: 550, height: 300 }}>slide 5</div>
-        <div style={{ width: 650, height: 300 }}>slide 6</div>
-        <div style={{ width: 700, height: 300 }}>slide 7</div>
-        <div style={{ width: 750, height: 300 }}>slide 8</div>
-        <div style={{ width: 800, height: 300 }}>slide 9</div>
+        <div style={{ width: 300, height: 300 }}>slide 1</div>
+        <div style={{ width: 300, height: 300 }}>slide 2</div>
+        <div style={{ width: 300, height: 300 }}>slide 3</div>
+        <div style={{ width: 300, height: 300 }}>slide 4</div>
+        <div style={{ width: 300, height: 300 }}>slide 5</div>
+        <div style={{ width: 300, height: 300 }}>slide 6</div>
+        <div style={{ width: 300, height: 300 }}>slide 7</div>
+        <div style={{ width: 300, height: 300 }}>slide 8</div>
+        <div style={{ width: 300, height: 300 }}>slide 9</div>
       </Carousel>
     );
   }

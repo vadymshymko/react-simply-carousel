@@ -87,10 +87,12 @@ class ReactJSSimpleCarousel extends Component {
 
   componentDidUpdate(prevProps, prevState) {
     const { activeSlideIndex: prevActiveSlideIndex } = this.getRenderProps(prevState, prevProps);
-    const { activeSlideIndex } = this.renderProps;
+    const { activeSlideIndex, speed, delay } = this.renderProps;
 
     if (activeSlideIndex === prevActiveSlideIndex) {
       this.direction = '';
+    } else if (!speed && !delay) {
+      this.updatePositionIndex();
     }
   }
 
@@ -166,7 +168,7 @@ class ReactJSSimpleCarousel extends Component {
         return result;
       }
 
-      return result + item.current.offsetWidth;
+      return result + item.offsetWidth;
     }, 0);
   }
 
@@ -176,7 +178,7 @@ class ReactJSSimpleCarousel extends Component {
         return total;
       }
 
-      return total + (item.current.offsetWidth || 0);
+      return total + (item.offsetWidth || 0);
     }, 0);
 
     return offsetByIndex;
@@ -265,7 +267,29 @@ class ReactJSSimpleCarousel extends Component {
       onRequestChange(newActiveSlideIndex);
     } else {
       this.itemsListRef.current.style.transform = `translateX(-${this.itemsListRef.current.offsetWidth / 3}px)`;
+
+      if (!speed && !delay) {
+        this.updatePositionIndex();
+      }
     }
+  }
+
+  updatePositionIndex = () => {
+    const { activeSlideIndex, onAfterChange } = this.renderProps;
+    const { positionIndex } = this.state;
+
+    this.setState(() => ({
+      positionIndex: activeSlideIndex,
+    }), () => {
+      this.itemsListDragStartPos = null;
+      this.isListDragging = false;
+
+      this.startAutoplay();
+
+      if (onAfterChange) {
+        onAfterChange(activeSlideIndex, positionIndex);
+      }
+    });
   }
 
   startAutoplay = () => {
@@ -319,25 +343,6 @@ class ReactJSSimpleCarousel extends Component {
     this.updateActiveSlideIndex(this.getNextSlideIndex('forward'), 'forward');
   }
 
-  handleItemsListTransitionEnd = () => {
-    const { activeSlideIndex, onAfterChange } = this.renderProps;
-
-    this.setState(() => ({
-      positionIndex: activeSlideIndex,
-    }), () => {
-      const { positionIndex } = this.state;
-
-      this.itemsListDragStartPos = null;
-      this.isListDragging = false;
-
-      this.startAutoplay();
-
-      if (onAfterChange) {
-        onAfterChange(activeSlideIndex, positionIndex);
-      }
-    });
-  }
-
   updateItemsListPosByDragPos = (dragPos) => {
     const dragPosDiff = (this.itemsListDragStartPos - dragPos)
     + (this.itemsListRef.current.offsetWidth / 3);
@@ -352,7 +357,7 @@ class ReactJSSimpleCarousel extends Component {
   handleItemsListDragEnd = (dragPos) => {
     const { activeSlideIndex } = this.renderProps;
     const mousePosDiff = this.itemsListDragStartPos - dragPos;
-    const activeItemHalfWidth = this.slides[activeSlideIndex].current.offsetWidth / 2;
+    const activeItemHalfWidth = this.slides[activeSlideIndex].offsetWidth / 2;
 
     if (mousePosDiff > activeItemHalfWidth) {
       this.updateActiveSlideIndex(this.getNextSlideIndex('forward'), 'forward');
@@ -427,7 +432,10 @@ class ReactJSSimpleCarousel extends Component {
 
     return (
       items.map((
-        {
+        item,
+        index,
+      ) => {
+        const {
           props: {
             className: itemClassName = '',
             style: itemStyle = {},
@@ -435,9 +443,8 @@ class ReactJSSimpleCarousel extends Component {
             ...itemComponentProps
           } = {},
           ...slideComponentData
-        },
-        index,
-      ) => {
+        } = item;
+
         const direction = this.renderedSlidesCount >= this.slidesCount ? 'forward' : 'backward';
 
         const isActive = index + startIndex === activeSlideIndex;
@@ -458,6 +465,7 @@ class ReactJSSimpleCarousel extends Component {
           })
           : itemOnClick;
         const props = {
+          role: 'tabpanel',
           className,
           style,
           onClick,
@@ -465,24 +473,21 @@ class ReactJSSimpleCarousel extends Component {
           ...(isActive ? activeSlideProps : {}),
         };
 
-        this.slides[index + startIndex] = createRef();
-
         this.renderedSlidesCount = this.renderedSlidesCount + 1;
 
         return {
-          props: {
-            role: 'tabpanel',
-            ...props,
-          },
+          props,
           ...slideComponentData,
-          ref: this.slides[index + startIndex],
         };
       })
     );
   }
 
   render() {
+    const { windowWidth, positionIndex } = this.state;
+
     this.renderProps = this.getRenderProps(this.state, this.props);
+    this.slides = windowWidth ? [...this.itemsListRef.current.children] : [];
 
     const {
       activeSlideIndex,
@@ -524,8 +529,6 @@ class ReactJSSimpleCarousel extends Component {
       },
     } = this.renderProps;
 
-    const { windowWidth, positionIndex } = this.state;
-
     const slidesItems = Children.toArray(children);
 
     const innerWidth = this.getInnerWidth();
@@ -551,7 +554,6 @@ class ReactJSSimpleCarousel extends Component {
       ? `translateX(-${(activeSlideIndexOffset - positionIndexOffset + this.getOffsetCorrectionForEdgeSlides(activeSlideIndex, positionIndex)) + this.itemsListRef.current.offsetWidth / 3}px)`
       : null;
 
-    this.slides = [];
     this.slidesCount = slidesItems.length;
     this.renderedSlidesCount = 0;
 
@@ -590,7 +592,7 @@ class ReactJSSimpleCarousel extends Component {
             }}
             onTouchStart={this.handleItemsListTouchStart}
             onMouseDown={this.handleItemsListMouseDown}
-            onTransitionEnd={this.handleItemsListTransitionEnd}
+            onTransitionEnd={speed || delay ? this.updatePositionIndex : null}
             tabIndex="-1"
             role="presentation"
             {...itemsListProps}

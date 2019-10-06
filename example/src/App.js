@@ -3,7 +3,6 @@ import Carousel from 'react-simply-carousel';
 import logo from './logo.svg';
 import './App.css';
 
-
 class App extends Component {
   state = {
     activeSlideIndex: 0,
@@ -43,8 +42,8 @@ class App extends Component {
             });
           }}
           updateOnItemClick
-          speed={0}
-          delay={500}
+          speed={400}
+          delay={400}
           easing={'linear'}
           itemsToShow={3}
           itemsToScroll={1}

@@ -267,17 +267,20 @@ class ReactJSSimpleCarousel extends Component {
       onRequestChange(newActiveSlideIndex);
     } else {
       this.itemsListRef.current.style.transform = `translateX(-${this.itemsListRef.current.offsetWidth / 3}px)`;
+
+      if (!speed && !delay) {
+        this.updatePositionIndex();
+      }
     }
   }
 
   updatePositionIndex = () => {
     const { activeSlideIndex, onAfterChange } = this.renderProps;
+    const { positionIndex } = this.state;
 
     this.setState(() => ({
       positionIndex: activeSlideIndex,
     }), () => {
-      const { positionIndex } = this.state;
-
       this.itemsListDragStartPos = null;
       this.isListDragging = false;
 
@@ -429,7 +432,10 @@ class ReactJSSimpleCarousel extends Component {
 
     return (
       items.map((
-        {
+        item,
+        index,
+      ) => {
+        const {
           props: {
             className: itemClassName = '',
             style: itemStyle = {},
@@ -437,9 +443,8 @@ class ReactJSSimpleCarousel extends Component {
             ...itemComponentProps
           } = {},
           ...slideComponentData
-        },
-        index,
-      ) => {
+        } = item;
+
         const direction = this.renderedSlidesCount >= this.slidesCount ? 'forward' : 'backward';
 
         const isActive = index + startIndex === activeSlideIndex;
@@ -460,6 +465,7 @@ class ReactJSSimpleCarousel extends Component {
           })
           : itemOnClick;
         const props = {
+          role: 'tabpanel',
           className,
           style,
           onClick,
@@ -470,10 +476,7 @@ class ReactJSSimpleCarousel extends Component {
         this.renderedSlidesCount = this.renderedSlidesCount + 1;
 
         return {
-          props: {
-            role: 'tabpanel',
-            ...props,
-          },
+          props,
           ...slideComponentData,
         };
       })
@@ -589,7 +592,7 @@ class ReactJSSimpleCarousel extends Component {
             }}
             onTouchStart={this.handleItemsListTouchStart}
             onMouseDown={this.handleItemsListMouseDown}
-            onTransitionEnd={this.updatePositionIndex}
+            onTransitionEnd={speed || delay ? this.updatePositionIndex : null}
             tabIndex="-1"
             role="presentation"
             {...itemsListProps}

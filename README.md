@@ -9,7 +9,7 @@ Simple && small controlled React.js carousel component (touch enabled, infnite a
 * [Installation](#installation)
 * [Usage](#usage)
 * [Props](#props)
-* [Demos](#demos)
+* [Example](#example)
 
 ## Installation
 
@@ -66,7 +66,7 @@ class App extends Component {
 }
 ```
 
-#### Props
+## Props
 
 Name | Type | Default Value | Description   
 ---- | ---- | ------------- | --------------
@@ -91,5 +91,8 @@ forwardBtnProps | object | {} | Props for carousel forward button element
 backwardBtnProps | object | {} | Props for carousel backward button element
 responsiveProps | Array of objects | [] | carousel props for different window width. For example: `[{minWidth: 768, maxWidth: 992, itemsToShow: 3}, {maxWidth: 767, itemsToShow: 1}]` will show only one slide when window width is less than 767px and show 3 slides when window width is >= 768px and < 992px
 
+## Example
+
+See in `example` folder. (Clone this repo, go to `example` folder and run ```yarn start ```
 
 

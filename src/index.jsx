@@ -602,6 +602,7 @@ class ReactJSSimpleCarousel extends Component {
             onTouchStart={disableNav ? null : this.handleItemsListTouchStart}
             onMouseDown={disableNav ? null : this.handleItemsListMouseDown}
             onTransitionEnd={speed || delay ? this.updatePositionIndex : null}
+            onDragStartCapture={this.handleItemsListMouseUp}
             tabIndex="-1"
             role="presentation"
             {...itemsListProps}

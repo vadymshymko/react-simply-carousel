@@ -481,7 +481,6 @@ class ReactJSSimpleCarousel extends Component {
     const { windowWidth, positionIndex } = this.state;
 
     this.renderProps = this.getRenderProps(this.state, this.props);
-    this.slides = windowWidth ? [...this.itemsListRef.current.children] : [];
 
     const {
       activeSlideIndex,
@@ -527,6 +526,13 @@ class ReactJSSimpleCarousel extends Component {
 
     const slidesItems = Children.toArray(children);
 
+    this.slides = windowWidth
+      ? [...this.itemsListRef.current.children].slice(
+        slidesItems.length - positionIndex,
+        slidesItems.length - positionIndex + slidesItems.length,
+      )
+      : [];
+
     const innerWidth = this.getInnerWidth();
 
     const isAllSlidesVisible = itemsToShow === slidesItems.length;
@@ -546,7 +552,7 @@ class ReactJSSimpleCarousel extends Component {
     const itemsListTransition = !isNewSLideIndex || !(speed || delay)
       ? null
       : `transform ${speed}ms ${easing} ${delay}ms`;
-    const itemsListTranslateX = disableNav
+    const itemsListTranslateX = disableNav || !windowWidth
       ? 0
       : (
         activeSlideIndexOffset

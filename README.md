@@ -1,6 +1,8 @@
 # react-simply-carousel
 
-![gzip size](https://img.badgesize.io/https://unpkg.com/react-simply-carousel/dist/index.js?compression=gzip)
+[![npm version](https://img.shields.io/npm/v/react-simply-carousel.svg?style=flat)](https://www.npmjs.com/package/react)
+![npm bundle size](https://img.shields.io/bundlephobia/minzip/react-simply-carousel?label=size)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/vadymshymko/react-simply-carousel/blob/master/LICENSE)
 
 Simple && small controlled React.js carousel component (touch enabled, infnite and responsive)
 
@@ -9,7 +11,7 @@ Simple && small controlled React.js carousel component (touch enabled, infnite a
 * [Installation](#installation)
 * [Usage](#usage)
 * [Props](#props)
-* [Example](#example)
+* [Demo](#demo)
 
 ## Installation
 
@@ -94,6 +96,6 @@ responsiveProps | Array of objects | [] | carousel props for different window wi
 speed | number | 0 | Slide change speed (css transition speed) in ms
 updateOnItemClick | boolean | false | Boolean indicating if the `onRequestChange` prop should be called after click on some slide
 
-## Example
+## Demo
 
-See in `example` folder. (Clone this repo, go to `example` folder and run ```yarn start ```
+[![Edit react-simply-carousel-demo](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/k0fxi?fontsize=14)

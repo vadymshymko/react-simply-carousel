@@ -3,13 +3,14 @@ import PropTypes from 'prop-types';
 
 import styles from './styles.less';
 
-class ReactJSSimpleCarousel extends Component {
+class ReactSimplyCarousel extends Component {
   static propTypes = {
     activeSlideIndex: PropTypes.number.isRequired,
     activeSlideProps: PropTypes.objectOf(PropTypes.any),
     autoplay: PropTypes.bool,
     autoplayDirection: PropTypes.oneOf(['forward', 'backward']),
     backwardBtnProps: PropTypes.objectOf(PropTypes.any),
+    centerMode: PropTypes.bool,
     children: PropTypes.node,
     containerProps: PropTypes.objectOf(PropTypes.any),
     delay: PropTypes.number,
@@ -33,6 +34,7 @@ class ReactJSSimpleCarousel extends Component {
     autoplay: false,
     autoplayDirection: 'forward',
     backwardBtnProps: {},
+    centerMode: false,
     children: null,
     containerProps: {},
     delay: 0,
@@ -97,6 +99,9 @@ class ReactJSSimpleCarousel extends Component {
     document.removeEventListener('mouseup', this.handleItemsListMouseUp);
     document.removeEventListener('touchmove', this.handleItemsListTouchMove);
     document.removeEventListener('touchend', this.handleItemsListTouchEnd);
+
+    this.itemsListRef.current.removeEventListener('mouseout', this.handleItemsListMouseUp);
+    this.itemsListRef.current.removeEventListener('dragstart', this.handleItemsListMouseUp);
   }
 
   getRenderProps = (state, props) => {
@@ -369,6 +374,9 @@ class ReactJSSimpleCarousel extends Component {
   }
 
   handleItemsListMouseUp = (event) => {
+    this.itemsListRef.current.removeEventListener('mouseout', this.handleItemsListMouseUp);
+    this.itemsListRef.current.removeEventListener('dragstart', this.handleItemsListMouseUp);
+
     document.removeEventListener('mousemove', this.handleItemsListMouseMove);
     document.removeEventListener('mouseup', this.handleItemsListMouseUp);
 
@@ -385,6 +393,9 @@ class ReactJSSimpleCarousel extends Component {
 
       document.addEventListener('mousemove', this.handleItemsListMouseMove);
       document.addEventListener('mouseup', this.handleItemsListMouseUp);
+
+      this.itemsListRef.current.addEventListener('mouseout', this.handleItemsListMouseUp);
+      this.itemsListRef.current.addEventListener('dragstart', this.handleItemsListMouseUp);
     }
   };
 
@@ -592,6 +603,7 @@ class ReactJSSimpleCarousel extends Component {
           {...innerProps}
           ref={this.innerRef}
         >
+          {/* eslint-disable-next-line jsx-a11y/mouse-events-have-key-events */}
           <div
             className={`${styles.ReactJSSimpleCarousel__itemsList} ${itemsListClassName}`}
             style={{
@@ -602,7 +614,6 @@ class ReactJSSimpleCarousel extends Component {
             onTouchStart={disableNav ? null : this.handleItemsListTouchStart}
             onMouseDown={disableNav ? null : this.handleItemsListMouseDown}
             onTransitionEnd={speed || delay ? this.updatePositionIndex : null}
-            onDragStartCapture={this.handleItemsListMouseUp}
             tabIndex="-1"
             role="presentation"
             {...itemsListProps}
@@ -629,4 +640,4 @@ class ReactJSSimpleCarousel extends Component {
   }
 }
 
-export default ReactJSSimpleCarousel;
+export default ReactSimplyCarousel;

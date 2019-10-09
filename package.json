@@ -1,6 +1,6 @@
 {
   "name": "react-simply-carousel",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Simple react.js carousel component",
   "main": "dist/index.js",
   "files": [
@@ -8,7 +8,7 @@
     "src/"
   ],
   "unpkg": "dist/index.js",
-  "module": "src/index.js",
+  "module": "dist/index.js",
   "sideEffects": false,
   "scripts": {
     "build": "webpack",

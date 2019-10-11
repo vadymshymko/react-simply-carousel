@@ -4,8 +4,7 @@
   "description": "Simple react.js carousel component",
   "main": "dist/index.js",
   "files": [
-    "dist/",
-    "src/"
+    "dist/"
   ],
   "unpkg": "dist/index.js",
   "module": "dist/index.js",
@@ -29,22 +28,22 @@
   },
   "keywords": [
     "react",
-    "reactjs",
     "react-component",
     "react-carousel",
     "carousel",
     "carousel-component",
     "carousel-plugin",
-    "slider",
-    "slider-plugin",
     "carousel-slider",
-    "responsive",
-    "touch-enabled",
-    "infinite",
-    "responsive-carousel"
+    "responsive-carousel",
+    "touch-enabled-carousel",
+    "infinite-carousel"
   ],
   "author": "Vadym Shymko <vadymshymko@gmail.com>",
-  "license": "SEE LICENSE IN <LICENSE>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vadymshymko/react-simply-carousel.git"
+  },
   "bugs": {
     "url": "https://github.com/vadymshymko/react-simply-carousel/issues"
   },

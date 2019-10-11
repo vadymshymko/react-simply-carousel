@@ -84,7 +84,7 @@ containerProps | object | {} | DOM props for container div element
 delay | number | 0 | Slide change delay (css transition delay) in ms
 disableNavIfAllVisible | boolean | true | Boolean indicating if the carousel nav (by nav buttons, click on slide item, mouse move or touch move) should be disabled if all slides is visible
 easing | string | 'linear' | Slide change easing (css transition easing)
-forwardBtnProps | object | {} | Contain DOM props for carousel backward button element, boolean prop `show` (for toggle button render) and node prop `children` (for render button childrens)
+forwardBtnProps | object | {} | Contain DOM props for carousel forward button element, boolean prop `show` (for toggle button render) and node prop `children` (for render button childrens)
 hideNavIfAllVisible | boolean | true | Boolean indicating if the carousel nav buttons should be hidden if all slides is visible
 innerProps | object | {} | DOM props for inner div element
 itemsListProps | object | {} | DOM props for items list div element

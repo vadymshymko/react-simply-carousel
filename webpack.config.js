@@ -10,6 +10,7 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
     library: 'ReactSimplyCarousel',
     libraryTarget: 'umd',
+    globalObject: 'this',
   },
   externals: {
     react: {

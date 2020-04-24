@@ -4,54 +4,6 @@ import PropTypes from 'prop-types';
 import styles from './styles.less';
 
 class ReactSimplyCarousel extends Component {
-  static propTypes = {
-    activeSlideIndex: PropTypes.number.isRequired,
-    activeSlideProps: PropTypes.objectOf(PropTypes.any),
-    autoplay: PropTypes.bool,
-    autoplayDirection: PropTypes.oneOf(['forward', 'backward']),
-    backwardBtnProps: PropTypes.objectOf(PropTypes.any),
-    centerMode: PropTypes.bool,
-    children: PropTypes.node,
-    containerProps: PropTypes.objectOf(PropTypes.any),
-    delay: PropTypes.number,
-    disableNavIfAllVisible: PropTypes.bool,
-    easing: PropTypes.string,
-    forwardBtnProps: PropTypes.objectOf(PropTypes.any),
-    hideNavIfAllVisible: PropTypes.bool,
-    innerProps: PropTypes.objectOf(PropTypes.any),
-    itemsListProps: PropTypes.objectOf(PropTypes.any),
-    itemsToScroll: PropTypes.number,
-    itemsToShow: PropTypes.number,
-    onAfterChange: PropTypes.func,
-    onRequestChange: PropTypes.func.isRequired,
-    responsiveProps: PropTypes.arrayOf(PropTypes.object),
-    speed: PropTypes.number,
-    updateOnItemClick: PropTypes.bool,
-  };
-
-  static defaultProps = {
-    activeSlideProps: {},
-    autoplay: false,
-    autoplayDirection: 'forward',
-    backwardBtnProps: {},
-    centerMode: false,
-    children: null,
-    containerProps: {},
-    delay: 0,
-    disableNavIfAllVisible: true,
-    easing: 'linear',
-    forwardBtnProps: {},
-    hideNavIfAllVisible: true,
-    innerProps: {},
-    itemsListProps: {},
-    itemsToScroll: 1,
-    itemsToShow: 0,
-    onAfterChange: null,
-    responsiveProps: [],
-    speed: 0,
-    updateOnItemClick: false,
-  };
-
   constructor(props) {
     super(props);
 
@@ -478,7 +430,7 @@ class ReactSimplyCarousel extends Component {
           ...(isActive ? activeSlideProps : {}),
         };
 
-        this.renderedSlidesCount = this.renderedSlidesCount + 1;
+        this.renderedSlidesCount += 1;
 
         return {
           props,
@@ -581,11 +533,13 @@ class ReactSimplyCarousel extends Component {
       <div
         className={`${styles.ReactJSSimpleCarousel} ${containerClassName}`}
         onClickCapture={this.handleContainerClickCapture}
+        // eslint-disable-next-line react/jsx-props-no-spreading
         {...containerProps}
         ref={this.containerRef}
       >
         {showBackwardBtn && !hideNav && (
           <button
+            // eslint-disable-next-line react/jsx-props-no-spreading
             {...backwardBtnProps}
             type="button"
             onClick={this.handleBackwardBtnClick}
@@ -600,6 +554,7 @@ class ReactSimplyCarousel extends Component {
             width: innerWidth ? `${innerWidth}px` : innerWidthStyle,
             ...innerStyle,
           }}
+          // eslint-disable-next-line react/jsx-props-no-spreading
           {...innerProps}
           ref={this.innerRef}
         >
@@ -616,6 +571,7 @@ class ReactSimplyCarousel extends Component {
             onTransitionEnd={speed || delay ? this.updatePositionIndex : null}
             tabIndex="-1"
             role="presentation"
+            // eslint-disable-next-line react/jsx-props-no-spreading
             {...itemsListProps}
             ref={this.itemsListRef}
           >
@@ -628,6 +584,7 @@ class ReactSimplyCarousel extends Component {
 
         {showForwardBtn && !hideNav && (
           <button
+            // eslint-disable-next-line react/jsx-props-no-spreading
             {...forwardBtnProps}
             type="button"
             onClick={this.handleForwardBtnClick}
@@ -639,5 +596,53 @@ class ReactSimplyCarousel extends Component {
     );
   }
 }
+
+ReactSimplyCarousel.propTypes = {
+  activeSlideIndex: PropTypes.number.isRequired,
+  activeSlideProps: PropTypes.objectOf(PropTypes.any),
+  autoplay: PropTypes.bool,
+  autoplayDirection: PropTypes.oneOf(['forward', 'backward']),
+  backwardBtnProps: PropTypes.objectOf(PropTypes.any),
+  centerMode: PropTypes.bool,
+  children: PropTypes.node,
+  containerProps: PropTypes.objectOf(PropTypes.any),
+  delay: PropTypes.number,
+  disableNavIfAllVisible: PropTypes.bool,
+  easing: PropTypes.string,
+  forwardBtnProps: PropTypes.objectOf(PropTypes.any),
+  hideNavIfAllVisible: PropTypes.bool,
+  innerProps: PropTypes.objectOf(PropTypes.any),
+  itemsListProps: PropTypes.objectOf(PropTypes.any),
+  itemsToScroll: PropTypes.number,
+  itemsToShow: PropTypes.number,
+  onAfterChange: PropTypes.func,
+  onRequestChange: PropTypes.func.isRequired,
+  responsiveProps: PropTypes.arrayOf(PropTypes.object),
+  speed: PropTypes.number,
+  updateOnItemClick: PropTypes.bool,
+};
+
+ReactSimplyCarousel.defaultProps = {
+  activeSlideProps: {},
+  autoplay: false,
+  autoplayDirection: 'forward',
+  backwardBtnProps: {},
+  centerMode: false,
+  children: null,
+  containerProps: {},
+  delay: 0,
+  disableNavIfAllVisible: true,
+  easing: 'linear',
+  forwardBtnProps: {},
+  hideNavIfAllVisible: true,
+  innerProps: {},
+  itemsListProps: {},
+  itemsToScroll: 1,
+  itemsToShow: 0,
+  onAfterChange: null,
+  responsiveProps: [],
+  speed: 0,
+  updateOnItemClick: false,
+};
 
 export default ReactSimplyCarousel;

@@ -20,7 +20,11 @@
     }
   },
   "lint-staged": {
-    "*.js?x": [
+    "*.jsx": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.js": [
       "eslint --fix",
       "prettier --write"
     ]

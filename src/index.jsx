@@ -9,15 +9,11 @@ function ReactSimplyCarousel({ responsiveProps, ...props }) {
   const containerRef = useRef(null);
   const innerRef = useRef(null);
   const itemsListRef = useRef(null);
-
   const itemsListDragStartPosRef = useRef(null);
   const isListDraggingRef = useRef(false);
-
   const directionRef = useRef("");
-
   const autoplayTimerRef = useRef(null);
   const resizeTimerRef = useRef(null);
-
   const renderedSlidesCountRef = useRef(0);
 
   const propsByWindowWidth = responsiveProps.reduce(

@@ -1,7 +1,7 @@
 # react-simply-carousel
 
 [![npm version](https://img.shields.io/npm/v/react-simply-carousel.svg?style=flat)](https://www.npmjs.com/package/react-simply-carousel)
-![npm bundle size](https://img.shields.io/bundlephobia/minzip/react-simply-carousel?label=size)
+![npm bundle size](https://img.shields.io/bundlephobia/minzip/react-simply-carousel@latest?label=size)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/vadymshymko/react-simply-carousel/blob/master/LICENSE)
 
 Simple && small controlled React.js carousel component (touch enabled, infnite and responsive)

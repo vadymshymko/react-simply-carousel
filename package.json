@@ -10,9 +10,8 @@
   "module": "dist/index.js",
   "sideEffects": false,
   "scripts": {
-    "build": "webpack",
-    "lint": "eslint . --ignore-path .gitignore --ext .js,.jsx",
-    "lint:fix": "eslint . --ignore-path .gitignore --ext .js,.jsx --fix",
+    "build": "webpack --mode=production",
+    "lint": "eslint --ext .js,.jsx --fix && prettier --write .",
     "prepublish": "yarn run lint && yarn run build"
   },
   "husky": {
@@ -21,8 +20,9 @@
     }
   },
   "lint-staged": {
-    "*.js": [
-      "eslint --fix"
+    "*.js?x": [
+      "eslint --fix",
+      "prettier --write"
     ]
   },
   "keywords": [
@@ -50,31 +50,18 @@
   "devDependencies": {
     "@babel/cli": "^7.12.10",
     "@babel/core": "^7.12.10",
-    "@babel/plugin-proposal-class-properties": "^7.12.1",
-    "@babel/plugin-proposal-export-default-from": "^7.12.1",
-    "@babel/plugin-transform-react-constant-elements": "^7.12.1",
-    "@babel/plugin-transform-react-display-name": "^7.12.1",
-    "@babel/plugin-transform-react-inline-elements": "^7.12.1",
     "@babel/plugin-transform-runtime": "^7.12.10",
     "@babel/preset-env": "^7.12.11",
     "@babel/preset-react": "^7.12.10",
-    "autoprefixer": "^10.1.0",
     "babel-eslint": "^10.1.0",
     "babel-jest": "^26.6.3",
     "babel-loader": "^8.2.2",
-    "babel-plugin-loop-optimizer": "^1.4.1",
-    "babel-plugin-minify-constant-folding": "^0.5.0",
-    "babel-plugin-minify-dead-code-elimination": "^0.5.1",
-    "babel-plugin-minify-guarded-expressions": "^0.4.4",
-    "babel-plugin-minify-numeric-literals": "^0.4.3",
-    "babel-plugin-minify-type-constructors": "^0.4.3",
-    "babel-plugin-transform-inline-consecutive-adds": "^0.4.3",
     "babel-plugin-transform-react-remove-prop-types": "^0.4.24",
     "babel-plugin-transform-remove-console": "^6.9.4",
     "clean-webpack-plugin": "^3.0.0",
-    "css-loader": "^5.0.1",
     "eslint": "^7.16.0",
     "eslint-config-airbnb": "^18.2.1",
+    "eslint-config-prettier": "^7.1.0",
     "eslint-import-resolver-webpack": "^0.13.0",
     "eslint-loader": "^4.0.2",
     "eslint-plugin-import": "^2.22.1",
@@ -83,12 +70,9 @@
     "eslint-plugin-react-hooks": "^4.2.0",
     "husky": "^4.3.6",
     "jest": "^26.6.3",
-    "less": "^4.0.0",
-    "less-loader": "^7.2.1",
     "lint-staged": "^10.5.3",
     "path": "^0.12.7",
-    "postcss-loader": "^4.1.0",
-    "style-loader": "^2.0.0",
+    "prettier": "^2.2.1",
     "webpack": "^5.11.1",
     "webpack-bundle-analyzer": "^4.3.0",
     "webpack-cli": "^4.3.0"
@@ -99,7 +83,7 @@
     "prop-types": "^15.7.2"
   },
   "peerDependencies": {
-    "react": "^16 || ^17",
-    "react-dom": "^16 || ^17"
+    "react": "^16.8.0",
+    "react-dom": "^16.8.0"
   }
 }

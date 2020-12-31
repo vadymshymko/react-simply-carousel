@@ -1,116 +1,140 @@
-import React, { Component, Children, createRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useState, useRef, useEffect, Children } from "react";
+import PropTypes from "prop-types";
 
-class ReactSimplyCarousel extends Component {
-  constructor(props) {
-    super(props);
+function ReactSimplyCarousel({ responsiveProps, ...props }) {
+  const [windowWidth, setWindowWidth] = useState(0);
+  // eslint-disable-next-line react/destructuring-assignment
+  const [positionIndex, setPositionIndex] = useState(props.activeSlideIndex);
 
-    this.containerRef = createRef();
-    this.innerRef = createRef();
-    this.itemsListRef = createRef();
+  const containerRef = useRef(null);
+  const innerRef = useRef(null);
+  const itemsListRef = useRef(null);
 
-    this.autoplayTimer = null;
-    this.itemsListDragStartPos = null;
-    this.resizeTimer = null;
+  const itemsListDragStartPosRef = useRef(null);
+  const isListDraggingRef = useRef(false);
 
-    this.direction = '';
-    this.slides = [];
+  const directionRef = useRef("");
 
-    this.state = {
-      windowWidth: 0,
-      positionIndex: props.activeSlideIndex,
-    };
-  }
+  const autoplayTimerRef = useRef(null);
+  const resizeTimerRef = useRef(null);
 
-  componentDidMount() {
-    this.handleInitializationEnd();
+  const renderedSlidesCountRef = useRef(0);
 
-    window.addEventListener('resize', this.handleWindowResize);
-  }
+  const propsByWindowWidth = responsiveProps.reduce(
+    (result, { minWidth = 0, maxWidth = null, ...item } = {}) => {
+      if (windowWidth > minWidth && (!maxWidth || windowWidth <= maxWidth)) {
+        return {
+          ...result,
+          ...item,
+        };
+      }
 
-  componentDidUpdate(prevProps, prevState) {
-    const { activeSlideIndex: prevActiveSlideIndex } = this.getRenderProps(
-      prevState,
-      prevProps,
-    );
-    const { activeSlideIndex, speed, delay } = this.renderProps;
+      return result;
+    },
+    props
+  );
+  const slidesItems = Children.toArray(propsByWindowWidth.children);
+  const {
+    containerProps: {
+      style: containerStyle,
+      onClickCapture: containerOnClickCapture,
+      ...containerProps
+    },
 
-    if (activeSlideIndex === prevActiveSlideIndex) {
-      this.direction = '';
-    } else if (!speed && !delay) {
-      this.updatePositionIndex();
+    innerProps: { style: innerStyle, ...innerProps },
+    itemsListProps: {
+      style: itemsListStyle,
+      onTouchStart: onItemsListTouchStart,
+      onMouseDown: onItemsListMouseDown,
+      onTransitionEnd: onItemsListTransitionEnd,
+      ...itemsListProps
+    },
+    backwardBtnProps: {
+      children: backwardBtnChildren = null,
+      show: showBackwardBtn = true,
+      ...backwardBtnProps
+    },
+    forwardBtnProps: {
+      children: forwardBtnChildren = null,
+      show: showForwardBtn = true,
+      ...forwardBtnProps
+    },
+    activeSlideProps: {
+      className: activeSlideClassName = "",
+      style: activeSlideStyle = {},
+      ...activeSlideProps
+    },
+    updateOnItemClick,
+    activeSlideIndex,
+    onRequestChange,
+    speed,
+    delay,
+    easing,
+    itemsToShow,
+    itemsToScroll,
+    children,
+    onAfterChange,
+    autoplay,
+    autoplayDirection,
+    disableNavIfAllVisible,
+    hideNavIfAllVisible,
+  } = windowWidth
+    ? {
+        ...propsByWindowWidth,
+        activeSlideIndex: Math.max(
+          0,
+          Math.min(propsByWindowWidth.activeSlideIndex, slidesItems.length - 1)
+        ),
+        itemsToShow: Math.min(
+          slidesItems.length,
+          propsByWindowWidth.itemsToShow
+        ),
+        itemsToScroll: Math.min(
+          slidesItems.length,
+          propsByWindowWidth.itemsToScroll
+        ),
+      }
+    : props;
+
+  const slides = windowWidth
+    ? [...itemsListRef.current.children].slice(
+        slidesItems.length - positionIndex,
+        slidesItems.length - positionIndex + slidesItems.length
+      )
+    : [];
+
+  const getOffsetCorrectionForEdgeSlides = () => {
+    if (positionIndex - activeSlideIndex === 0) {
+      return 0;
     }
-  }
 
-  componentWillUnmount() {
-    this.stopAutoplay();
-
-    clearTimeout(this.resizeTimer);
-    window.removeEventListener('resize', this.handleWindowResize);
-
-    document.removeEventListener('mousemove', this.handleItemsListMouseMove);
-    document.removeEventListener('mouseup', this.handleItemsListMouseUp);
-    document.removeEventListener('touchmove', this.handleItemsListTouchMove);
-    document.removeEventListener('touchend', this.handleItemsListTouchEnd);
-
-    this.itemsListRef.current.removeEventListener(
-      'mouseout',
-      this.handleItemsListMouseUp,
-    );
-    this.itemsListRef.current.removeEventListener(
-      'dragstart',
-      this.handleItemsListMouseUp,
-    );
-  }
-
-  getRenderProps = (state, props) => {
-    const { windowWidth } = state;
-
-    const { responsiveProps, ...restProps } = props;
-
-    if (!windowWidth) {
-      return restProps;
+    if (
+      directionRef.current.toLowerCase() === "forward" &&
+      activeSlideIndex < positionIndex
+    ) {
+      return itemsListRef.current.offsetWidth / 3;
     }
 
-    const propsByWindowWidth = responsiveProps.reduce(
-      (result, { minWidth = 0, maxWidth = null, ...item } = {}) => {
-        if (windowWidth > minWidth && (!maxWidth || windowWidth <= maxWidth)) {
-          return {
-            ...result,
-            ...item,
-          };
-        }
+    if (
+      directionRef.current.toLowerCase() === "backward" &&
+      activeSlideIndex > positionIndex
+    ) {
+      return -itemsListRef.current.offsetWidth / 3;
+    }
 
-        return result;
-      },
-      restProps,
-    );
-
-    const slidesCount = Children.toArray(propsByWindowWidth.children).length;
-
-    return {
-      ...propsByWindowWidth,
-      activeSlideIndex: Math.max(
-        0,
-        Math.min(propsByWindowWidth.activeSlideIndex, slidesCount - 1),
-      ),
-      itemsToShow: Math.min(slidesCount, propsByWindowWidth.itemsToShow),
-      itemsToScroll: Math.min(slidesCount, propsByWindowWidth.itemsToScroll),
-    };
+    return 0;
   };
 
-  getInnerWidth = () => {
-    const { windowWidth } = this.state;
-    const { activeSlideIndex, itemsToShow } = this.renderProps;
-
+  const getInnerWidth = () => {
     if (!windowWidth || !itemsToShow) {
       return null;
     }
 
-    return this.slides.reduce((result, item, index) => {
-      const isItemVisible = (index >= activeSlideIndex && index < activeSlideIndex + itemsToShow)
-        || (index < activeSlideIndex
-          && index < activeSlideIndex + itemsToShow - this.slides.length);
+    return slides.reduce((result, item, index) => {
+      const isItemVisible =
+        (index >= activeSlideIndex && index < activeSlideIndex + itemsToShow) ||
+        (index < activeSlideIndex &&
+          index < activeSlideIndex + itemsToShow - slides.length);
 
       if (!isItemVisible) {
         return result;
@@ -120,8 +144,8 @@ class ReactSimplyCarousel extends Component {
     }, 0);
   };
 
-  getItemsListOffsetBySlideIndex = (slideIndex) => {
-    const offsetByIndex = this.slides.reduce((total, item, index) => {
+  const getItemsListOffsetBySlideIndex = (slideIndex) => {
+    const offsetByIndex = slides.reduce((total, item, index) => {
       if (index >= slideIndex) {
         return total;
       }
@@ -132,54 +156,45 @@ class ReactSimplyCarousel extends Component {
     return offsetByIndex;
   };
 
-  getOffsetCorrectionForEdgeSlides = (activeSlideIndex, positionIndex) => {
-    if (positionIndex - activeSlideIndex === 0) {
-      return 0;
-    }
+  const innerWidth = getInnerWidth();
+  const innerStyleWidth =
+    innerStyle && innerStyle.width ? innerStyle.width : null;
 
-    if (
-      this.direction.toLowerCase() === 'forward'
-      && activeSlideIndex < positionIndex
-    ) {
-      return this.itemsListRef.current.offsetWidth / 3;
-    }
+  const isAllSlidesVisible = itemsToShow === slidesItems.length;
 
-    if (
-      this.direction.toLowerCase() === 'backward'
-      && activeSlideIndex > positionIndex
-    ) {
-      return -this.itemsListRef.current.offsetWidth / 3;
-    }
+  const hideNav = hideNavIfAllVisible && isAllSlidesVisible;
+  const disableNav = disableNavIfAllVisible && isAllSlidesVisible;
 
-    return 0;
-  };
+  const isNewSLideIndex = activeSlideIndex - positionIndex !== 0;
 
-  getSlideItemOnClick = ({
-    activeSlideIndex, direction, index, onClick,
-  }) => {
-    const slideItemOnClick = (event) => {
-      const forwardDirectionValue = activeSlideIndex < index ? 'forward' : '';
-      const backwardDirectionValue = activeSlideIndex > index ? 'backward' : '';
+  const positionIndexOffset =
+    windowWidth && isNewSLideIndex
+      ? getItemsListOffsetBySlideIndex(positionIndex)
+      : 0;
+  const activeSlideIndexOffset =
+    windowWidth && isNewSLideIndex
+      ? getItemsListOffsetBySlideIndex(activeSlideIndex)
+      : 0;
 
-      this.updateActiveSlideIndex(
-        index,
-        direction || forwardDirectionValue || backwardDirectionValue,
-      );
+  const itemsListTransition =
+    !isNewSLideIndex || !(speed || delay)
+      ? null
+      : `transform ${speed}ms ${easing} ${delay}ms`;
+  const itemsListTranslateX =
+    disableNav || !windowWidth
+      ? 0
+      : activeSlideIndexOffset -
+        positionIndexOffset +
+        getOffsetCorrectionForEdgeSlides(activeSlideIndex, positionIndex) +
+        itemsListRef.current.offsetWidth / 3;
+  const itemsListTransform = windowWidth
+    ? `translateX(-${itemsListTranslateX}px)`
+    : null;
 
-      if (onClick) {
-        onClick(event);
-      }
-    };
-
-    return slideItemOnClick;
-  };
-
-  getNextSlideIndex = (direction) => {
-    const { activeSlideIndex, itemsToScroll, children } = this.renderProps;
-
+  const getNextSlideIndex = (direction) => {
     const lastSlideIndex = Children.count(children) - 1;
 
-    if (direction === 'forward') {
+    if (direction === "forward") {
       const nextSlideIndex = activeSlideIndex + itemsToScroll;
       const isOnEnd = nextSlideIndex > lastSlideIndex;
       const newSlideIndex = isOnEnd
@@ -189,7 +204,7 @@ class ReactSimplyCarousel extends Component {
       return newSlideIndex;
     }
 
-    if (direction === 'backward') {
+    if (direction === "backward") {
       const nextSlideIndex = activeSlideIndex - itemsToScroll;
       const isOnStart = nextSlideIndex < 0;
       const newSlideIndex = isOnStart
@@ -202,92 +217,47 @@ class ReactSimplyCarousel extends Component {
     return activeSlideIndex;
   };
 
-  updateActiveSlideIndex = (newActiveSlideIndex, direction) => {
-    const {
-      activeSlideIndex,
-      onRequestChange,
-      speed,
-      delay,
-      easing,
-    } = this.renderProps;
+  const stopAutoplay = () => {
+    clearTimeout(autoplayTimerRef.current);
+  };
 
-    this.itemsListRef.current.style.transition = speed || delay ? `transform ${speed}ms ${easing} ${delay}ms` : null;
+  const updatePositionIndex = () => {
+    setPositionIndex(activeSlideIndex);
+  };
+
+  const updateActiveSlideIndex = (newActiveSlideIndex, direction) => {
+    itemsListRef.current.style.transition =
+      speed || delay ? `transform ${speed}ms ${easing} ${delay}ms` : null;
 
     if (newActiveSlideIndex !== activeSlideIndex) {
-      this.stopAutoplay();
+      stopAutoplay();
 
-      this.direction = direction;
+      directionRef.current = direction;
       onRequestChange(newActiveSlideIndex);
     } else {
-      this.itemsListRef.current.style.transform = `translateX(-${
-        this.itemsListRef.current.offsetWidth / 3
+      itemsListRef.current.style.transform = `translateX(-${
+        itemsListRef.current.offsetWidth / 3
       }px)`;
 
       if (!speed && !delay) {
-        this.updatePositionIndex();
+        updatePositionIndex();
       }
     }
   };
 
-  updatePositionIndex = () => {
-    const { activeSlideIndex, onAfterChange } = this.renderProps;
-    const { positionIndex } = this.state;
-
-    this.setState(
-      () => ({
-        positionIndex: activeSlideIndex,
-      }),
-      () => {
-        this.itemsListDragStartPos = null;
-        this.isListDragging = false;
-
-        this.startAutoplay();
-
-        if (onAfterChange) {
-          onAfterChange(activeSlideIndex, positionIndex);
-        }
-      },
-    );
-  };
-
-  startAutoplay = () => {
-    const { autoplay, autoplayDirection, delay } = this.renderProps;
-
+  const startAutoplay = () => {
     if (autoplay) {
-      this.autoplayTimer = setTimeout(() => {
-        this.updateActiveSlideIndex(
-          this.getNextSlideIndex(autoplayDirection),
-          autoplayDirection,
+      autoplayTimerRef.current = setTimeout(() => {
+        updateActiveSlideIndex(
+          getNextSlideIndex(autoplayDirection),
+          autoplayDirection
         );
       }, delay);
     }
   };
 
-  stopAutoplay = () => {
-    clearTimeout(this.autoplayTimer);
-  };
-
-  handleInitializationEnd = () => {
-    this.setState(
-      () => ({
-        windowWidth: window.innerWidth,
-      }),
-      this.startAutoplay,
-    );
-  };
-
-  handleWindowResize = () => {
-    clearTimeout(this.resizeTimer);
-
-    this.resizeTimer = setTimeout(this.handleInitializationEnd, 400);
-  };
-
-  handleContainerClickCapture = (event) => {
-    const {
-      containerProps: { onClickCapture: containerOnClickCapture },
-    } = this.renderProps;
-
-    if (this.isListDragging) {
+  const handleContainerClickCapture = (event) => {
+    if (isListDraggingRef.current) {
       event.preventDefault();
       event.stopPropagation();
 
@@ -297,132 +267,135 @@ class ReactSimplyCarousel extends Component {
     }
   };
 
-  handleBackwardBtnClick = () => {
-    this.updateActiveSlideIndex(this.getNextSlideIndex('backward'), 'backward');
+  const handleBackwardBtnClick = () => {
+    updateActiveSlideIndex(getNextSlideIndex("backward"), "backward");
   };
 
-  handleForwardBtnClick = () => {
-    this.updateActiveSlideIndex(this.getNextSlideIndex('forward'), 'forward');
-  };
-
-  updateItemsListPosByDragPos = (dragPos) => {
-    const dragPosDiff = this.itemsListDragStartPos
-      - dragPos
-      + this.itemsListRef.current.offsetWidth / 3;
+  const updateItemsListPosByDragPos = (dragPos) => {
+    const dragPosDiff =
+      itemsListDragStartPosRef.current -
+      dragPos +
+      itemsListRef.current.offsetWidth / 3;
     const minDragPos = 0;
-    const maxDragPos = this.itemsListRef.current.offsetWidth - this.innerRef.current.offsetWidth;
+    const maxDragPos =
+      itemsListRef.current.offsetWidth - innerRef.current.offsetWidth;
     const itemsListPos = Math.max(
       Math.min(minDragPos, -dragPosDiff),
-      -maxDragPos,
+      -maxDragPos
     );
 
-    this.itemsListRef.current.style.transition = 'none';
-    this.itemsListRef.current.style.transform = `translateX(${itemsListPos}px)`;
+    itemsListRef.current.style.transition = "none";
+    itemsListRef.current.style.transform = `translateX(${itemsListPos}px)`;
   };
 
-  handleItemsListDragEnd = (dragPos) => {
-    const { activeSlideIndex } = this.renderProps;
-    const mousePosDiff = this.itemsListDragStartPos - dragPos;
-    const activeItemHalfWidth = this.slides[activeSlideIndex].offsetWidth / 2;
+  const handleItemsListDragEnd = (dragPos) => {
+    const mousePosDiff = itemsListDragStartPosRef.current - dragPos;
+    const activeItemHalfWidth = slides[activeSlideIndex].offsetWidth / 2;
 
     if (mousePosDiff > activeItemHalfWidth) {
-      this.updateActiveSlideIndex(this.getNextSlideIndex('forward'), 'forward');
+      updateActiveSlideIndex(getNextSlideIndex("forward"), "forward");
     } else if (mousePosDiff < -activeItemHalfWidth) {
-      this.updateActiveSlideIndex(
-        this.getNextSlideIndex('backward'),
-        'backward',
-      );
+      updateActiveSlideIndex(getNextSlideIndex("backward"), "backward");
     } else {
-      this.updateActiveSlideIndex(activeSlideIndex, 'forward');
+      updateActiveSlideIndex(activeSlideIndex, "forward");
     }
   };
 
-  handleItemsListMouseMove = (event) => {
-    this.isListDragging = true;
+  const handleItemsListMouseMove = (event) => {
+    isListDraggingRef.current = true;
 
-    this.updateItemsListPosByDragPos(event.clientX);
+    updateItemsListPosByDragPos(event.clientX);
   };
 
-  handleItemsListMouseUp = (event) => {
-    this.itemsListRef.current.removeEventListener(
-      'mouseout',
-      this.handleItemsListMouseUp,
+  const handleItemsListMouseUp = (event) => {
+    itemsListRef.current.removeEventListener(
+      "mouseout",
+      handleItemsListMouseUp
     );
-    this.itemsListRef.current.removeEventListener(
-      'dragstart',
-      this.handleItemsListMouseUp,
+    itemsListRef.current.removeEventListener(
+      "dragstart",
+      handleItemsListMouseUp
     );
 
-    document.removeEventListener('mousemove', this.handleItemsListMouseMove);
-    document.removeEventListener('mouseup', this.handleItemsListMouseUp);
+    document.removeEventListener("mousemove", handleItemsListMouseMove);
+    document.removeEventListener("mouseup", handleItemsListMouseUp);
 
-    if (this.isListDragging) {
-      this.handleItemsListDragEnd(event.clientX);
+    if (isListDraggingRef.current) {
+      handleItemsListDragEnd(event.clientX);
     }
   };
 
-  handleItemsListMouseDown = (event) => {
-    this.stopAutoplay();
+  const handleItemsListMouseDown = (event) => {
+    stopAutoplay();
 
-    if (!this.isListDragging) {
-      this.itemsListDragStartPos = event.clientX;
+    if (!isListDraggingRef.current) {
+      itemsListDragStartPosRef.current = event.clientX;
 
-      document.addEventListener('mousemove', this.handleItemsListMouseMove);
-      document.addEventListener('mouseup', this.handleItemsListMouseUp);
+      document.addEventListener("mousemove", handleItemsListMouseMove);
+      document.addEventListener("mouseup", handleItemsListMouseUp);
 
-      this.itemsListRef.current.addEventListener(
-        'mouseout',
-        this.handleItemsListMouseUp,
-      );
-      this.itemsListRef.current.addEventListener(
-        'dragstart',
-        this.handleItemsListMouseUp,
+      itemsListRef.current.addEventListener("mouseout", handleItemsListMouseUp);
+      itemsListRef.current.addEventListener(
+        "dragstart",
+        handleItemsListMouseUp
       );
     }
   };
 
-  handleItemsListTouchMove = (event) => {
-    this.isListDragging = true;
-    this.updateItemsListPosByDragPos(event.touches[0].clientX);
+  const handleItemsListTouchMove = (event) => {
+    isListDraggingRef.current = true;
+    updateItemsListPosByDragPos(event.touches[0].clientX);
   };
 
-  handleItemsListTouchEnd = (event) => {
-    document.removeEventListener('touchmove', this.handleItemsListTouchMove);
-    document.removeEventListener('touchend', this.handleItemsListTouchEnd);
+  const handleItemsListTouchEnd = (event) => {
+    document.removeEventListener("touchmove", handleItemsListTouchMove);
+    document.removeEventListener("touchend", handleItemsListTouchEnd);
 
-    if (this.isListDragging) {
-      this.handleItemsListDragEnd(
-        event.changedTouches[event.changedTouches.length - 1].clientX,
+    if (isListDraggingRef.current) {
+      handleItemsListDragEnd(
+        event.changedTouches[event.changedTouches.length - 1].clientX
       );
     }
   };
 
-  handleItemsListTouchStart = (event) => {
-    this.stopAutoplay();
+  const handleItemsListTouchStart = (event) => {
+    stopAutoplay();
 
-    if (!this.isListDragging) {
-      this.itemsListDragStartPos = event.touches[0].clientX;
+    if (!isListDraggingRef.current) {
+      itemsListDragStartPosRef.current = event.touches[0].clientX;
 
-      document.addEventListener('touchmove', this.handleItemsListTouchMove);
-      document.addEventListener('touchend', this.handleItemsListTouchEnd);
+      document.addEventListener("touchmove", handleItemsListTouchMove);
+      document.addEventListener("touchend", handleItemsListTouchEnd);
     }
   };
 
-  renderSlidesItems = (items, startIndex, disableNav) => {
-    const {
-      activeSlideIndex,
-      activeSlideProps: {
-        className: activeSlideClassName = '',
-        style: activeSlideStyle = {},
-        ...activeSlideProps
-      },
-      updateOnItemClick,
-    } = this.renderProps;
+  const getSlideItemOnClick = ({ direction, index, onClick }) => {
+    const slideItemOnClick = (event) => {
+      const forwardDirectionValue = activeSlideIndex < index ? "forward" : "";
+      const backwardDirectionValue = activeSlideIndex > index ? "backward" : "";
 
-    return items.map((item, index) => {
+      updateActiveSlideIndex(
+        index,
+        direction || forwardDirectionValue || backwardDirectionValue
+      );
+
+      if (onClick) {
+        onClick(event);
+      }
+    };
+
+    return slideItemOnClick;
+  };
+
+  const handleForwardBtnClick = () => {
+    updateActiveSlideIndex(getNextSlideIndex("forward"), "forward");
+  };
+
+  const renderSlidesItems = (items, startIndex, isDisableNav) =>
+    items.map((item, index) => {
       const {
         props: {
-          className: itemClassName = '',
+          className: itemClassName = "",
           onClick: itemOnClick,
           style: itemStyle = {},
           ...itemComponentProps
@@ -430,29 +403,32 @@ class ReactSimplyCarousel extends Component {
         ...slideComponentData
       } = item;
 
-      const direction = this.renderedSlidesCount >= this.slidesCount ? 'forward' : 'backward';
+      const direction =
+        renderedSlidesCountRef.current >= slidesItems.length
+          ? "forward"
+          : "backward";
 
       const isActive = index + startIndex === activeSlideIndex;
 
       const className = `${itemClassName} ${
-        isActive ? activeSlideClassName : ''
+        isActive ? activeSlideClassName : ""
       }`;
       const style = {
         ...itemStyle,
         ...(isActive ? activeSlideStyle : {}),
-        boxSizing: 'border-box',
+        boxSizing: "border-box",
         margin: 0,
       };
-      const onClick = !disableNav && updateOnItemClick
-        ? this.getSlideItemOnClick({
-          activeSlideIndex,
-          direction,
-          index: index + startIndex,
-          onClick: itemOnClick,
-        })
-        : itemOnClick;
-      const props = {
-        role: 'tabpanel',
+      const onClick =
+        !isDisableNav && updateOnItemClick
+          ? getSlideItemOnClick({
+              direction,
+              index: index + startIndex,
+              onClick: itemOnClick,
+            })
+          : itemOnClick;
+      const slideProps = {
+        role: "tabpanel",
         className,
         style,
         onClick,
@@ -460,195 +436,177 @@ class ReactSimplyCarousel extends Component {
         ...(isActive ? activeSlideProps : {}),
       };
 
-      this.renderedSlidesCount += 1;
+      renderedSlidesCountRef.current += 1;
 
       return {
-        props,
+        props: slideProps,
         ...slideComponentData,
       };
     });
+
+  const updateWindowWidth = () => {
+    setWindowWidth(window.innerWidth);
   };
 
-  render() {
-    const { windowWidth, positionIndex } = this.state;
+  const handleWindowResize = () => {
+    clearTimeout(resizeTimerRef.current);
 
-    this.renderProps = this.getRenderProps(this.state, this.props);
+    resizeTimerRef.current = setTimeout(updateWindowWidth, 400);
+  };
 
-    const {
-      activeSlideIndex,
-      backwardBtnProps: {
-        children: backwardBtnChildren = null,
-        show: showBackwardBtn = true,
-        ...backwardBtnProps
-      },
-      children,
-      containerProps: {
-        style: containerStyle,
-        onClickCapture: containerOnClickCapture,
-        ...containerProps
-      },
-      delay,
-      disableNavIfAllVisible,
-      easing,
-      forwardBtnProps: {
-        children: forwardBtnChildren = null,
-        show: showForwardBtn = true,
-        ...forwardBtnProps
-      },
-      hideNavIfAllVisible,
-      innerProps: { style: innerStyle, ...innerProps },
-      itemsListProps: {
-        style: itemsListStyle,
-        onTouchStart: onItemsListTouchStart,
-        onMouseDown: onItemsListMouseDown,
-        onTransitionEnd: onItemsListTransitionEnd,
-        ...itemsListProps
-      },
-      itemsToShow,
-      speed,
-    } = this.renderProps;
+  useEffect(() => {
+    itemsListDragStartPosRef.current = null;
+    isListDraggingRef.current = false;
 
-    const slidesItems = Children.toArray(children);
+    startAutoplay();
 
-    this.slides = windowWidth
-      ? [...this.itemsListRef.current.children].slice(
-        slidesItems.length - positionIndex,
-        slidesItems.length - positionIndex + slidesItems.length,
-      )
-      : [];
+    if (onAfterChange) {
+      onAfterChange(activeSlideIndex, positionIndex);
+    }
 
-    const innerWidth = this.getInnerWidth();
-    const innerStyleWidth = innerStyle && innerStyle.width
-      ? innerStyle.width
-      : null;
+    return () => {
+      stopAutoplay();
+    };
+  }, [positionIndex]);
 
-    const isAllSlidesVisible = itemsToShow === slidesItems.length;
+  useEffect(() => {
+    if (windowWidth) {
+      startAutoplay();
+    }
 
-    const hideNav = hideNavIfAllVisible && isAllSlidesVisible;
-    const disableNav = disableNavIfAllVisible && isAllSlidesVisible;
+    return () => {
+      stopAutoplay();
+    };
+  }, [windowWidth]);
 
-    const isNewSLideIndex = activeSlideIndex - positionIndex !== 0;
+  useEffect(() => {
+    if (activeSlideIndex !== positionIndex) {
+      if (!speed && !delay) {
+        updatePositionIndex();
+      }
+    } else {
+      directionRef.current = "";
+    }
+  });
 
-    const positionIndexOffset = windowWidth && isNewSLideIndex
-      ? this.getItemsListOffsetBySlideIndex(positionIndex)
-      : 0;
-    const activeSlideIndexOffset = windowWidth && isNewSLideIndex
-      ? this.getItemsListOffsetBySlideIndex(activeSlideIndex)
-      : 0;
+  useEffect(() => {
+    const itemsListRefDOMElement = itemsListRef.current;
 
-    const itemsListTransition = !isNewSLideIndex || !(speed || delay)
-      ? null
-      : `transform ${speed}ms ${easing} ${delay}ms`;
-    const itemsListTranslateX = disableNav || !windowWidth
-      ? 0
-      : activeSlideIndexOffset
-          - positionIndexOffset
-          + this.getOffsetCorrectionForEdgeSlides(
-            activeSlideIndex,
-            positionIndex,
-          )
-          + this.itemsListRef.current.offsetWidth / 3;
-    const itemsListTransform = windowWidth
-      ? `translateX(-${itemsListTranslateX}px)`
-      : null;
+    updateWindowWidth();
 
-    this.slidesCount = slidesItems.length;
-    this.renderedSlidesCount = 0;
+    window.addEventListener("resize", handleWindowResize);
 
-    return (
+    return () => {
+      clearTimeout(resizeTimerRef.current);
+      window.removeEventListener("resize", handleWindowResize);
+
+      document.removeEventListener("mousemove", handleItemsListMouseMove);
+      document.removeEventListener("mouseup", handleItemsListMouseUp);
+      document.removeEventListener("touchmove", handleItemsListTouchMove);
+      document.removeEventListener("touchend", handleItemsListTouchEnd);
+
+      itemsListRefDOMElement.removeEventListener(
+        "mouseout",
+        handleItemsListMouseUp
+      );
+      itemsListRefDOMElement.removeEventListener(
+        "dragstart",
+        handleItemsListMouseUp
+      );
+
+      clearTimeout(autoplayTimerRef.current);
+    };
+  }, []);
+
+  renderedSlidesCountRef.current = 0;
+
+  return (
+    <div
+      onClickCapture={handleContainerClickCapture}
+      style={{
+        display: "flex",
+        boxSizing: "border-box",
+        justifyContent: "center",
+        ...(containerStyle || {}),
+      }}
+      // eslint-disable-next-line react/jsx-props-no-spreading
+      {...containerProps}
+      ref={containerRef}
+    >
+      {showBackwardBtn && !hideNav && (
+        <button
+          // eslint-disable-next-line react/jsx-props-no-spreading
+          {...backwardBtnProps}
+          type="button"
+          onClick={handleBackwardBtnClick}
+        >
+          {backwardBtnChildren}
+        </button>
+      )}
+
       <div
-        onClickCapture={this.handleContainerClickCapture}
         style={{
-          display: 'flex',
-          boxSizing: 'border-box',
-          justifyContent: 'center',
-          ...(containerStyle || {}),
+          display: "flex",
+          boxSizing: "border-box",
+          flexFlow: "row wrap",
+          maxWidth: "100%",
+          padding: "0",
+          overflow: "hidden",
+          width: innerWidth ? `${innerWidth}px` : innerStyleWidth,
+          ...innerStyle,
         }}
         // eslint-disable-next-line react/jsx-props-no-spreading
-        {...containerProps}
-        ref={this.containerRef}
+        {...innerProps}
+        ref={innerRef}
       >
-        {showBackwardBtn && !hideNav && (
-          <button
-            // eslint-disable-next-line react/jsx-props-no-spreading
-            {...backwardBtnProps}
-            type="button"
-            onClick={this.handleBackwardBtnClick}
-          >
-            {backwardBtnChildren}
-          </button>
-        )}
-
+        {/* eslint-disable-next-line jsx-a11y/mouse-events-have-key-events */}
         <div
           style={{
-            display: 'flex',
-            boxSizing: 'border-box',
-            flexFlow: 'row wrap',
-            maxWidth: '100%',
-            padding: '0',
-            overflow: 'hidden',
-            width: innerWidth
-              ? `${innerWidth}px`
-              : innerStyleWidth,
-            ...innerStyle,
+            display: "flex",
+            boxSizing: "border-box",
+            outline: "none",
+            ...(itemsListStyle || {}),
+            transition: itemsListTransition,
+            transform: itemsListTransform,
           }}
+          onTouchStart={disableNav ? null : handleItemsListTouchStart}
+          onMouseDown={disableNav ? null : handleItemsListMouseDown}
+          onTransitionEnd={speed || delay ? updatePositionIndex : null}
+          tabIndex="-1"
+          role="presentation"
           // eslint-disable-next-line react/jsx-props-no-spreading
-          {...innerProps}
-          ref={this.innerRef}
+          {...itemsListProps}
+          ref={itemsListRef}
         >
-          {/* eslint-disable-next-line jsx-a11y/mouse-events-have-key-events */}
-          <div
-            style={{
-              display: 'flex',
-              boxSizing: 'border-box',
-              outline: 'none',
-              ...(itemsListStyle || {}),
-              transition: itemsListTransition,
-              transform: itemsListTransform,
-            }}
-            onTouchStart={disableNav ? null : this.handleItemsListTouchStart}
-            onMouseDown={disableNav ? null : this.handleItemsListMouseDown}
-            onTransitionEnd={speed || delay ? this.updatePositionIndex : null}
-            tabIndex="-1"
-            role="presentation"
-            // eslint-disable-next-line react/jsx-props-no-spreading
-            {...itemsListProps}
-            ref={this.itemsListRef}
-          >
-            {!disableNav
-              && this.renderSlidesItems(
-                slidesItems.slice(positionIndex),
-                positionIndex,
-              )}
-            {this.renderSlidesItems(slidesItems, 0, disableNav)}
-            {!disableNav && this.renderSlidesItems(slidesItems, 0)}
-            {!disableNav
-              && this.renderSlidesItems(slidesItems.slice(0, positionIndex), 0)}
-          </div>
+          {!disableNav &&
+            renderSlidesItems(slidesItems.slice(positionIndex), positionIndex)}
+          {renderSlidesItems(slidesItems, 0, disableNav)}
+          {!disableNav && renderSlidesItems(slidesItems, 0)}
+          {!disableNav &&
+            renderSlidesItems(slidesItems.slice(0, positionIndex), 0)}
         </div>
-
-        {showForwardBtn && !hideNav && (
-          <button
-            // eslint-disable-next-line react/jsx-props-no-spreading
-            {...forwardBtnProps}
-            type="button"
-            onClick={this.handleForwardBtnClick}
-          >
-            {forwardBtnChildren}
-          </button>
-        )}
       </div>
-    );
-  }
+
+      {showForwardBtn && !hideNav && (
+        <button
+          // eslint-disable-next-line react/jsx-props-no-spreading
+          {...forwardBtnProps}
+          type="button"
+          onClick={handleForwardBtnClick}
+        >
+          {forwardBtnChildren}
+        </button>
+      )}
+    </div>
+  );
 }
 
 ReactSimplyCarousel.propTypes = {
   activeSlideIndex: PropTypes.number.isRequired,
   activeSlideProps: PropTypes.objectOf(PropTypes.any),
   autoplay: PropTypes.bool,
-  autoplayDirection: PropTypes.oneOf(['forward', 'backward']),
+  autoplayDirection: PropTypes.oneOf(["forward", "backward"]),
   backwardBtnProps: PropTypes.objectOf(PropTypes.any),
-  centerMode: PropTypes.bool,
   children: PropTypes.node,
   containerProps: PropTypes.objectOf(PropTypes.any),
   delay: PropTypes.number,
@@ -670,14 +628,13 @@ ReactSimplyCarousel.propTypes = {
 ReactSimplyCarousel.defaultProps = {
   activeSlideProps: {},
   autoplay: false,
-  autoplayDirection: 'forward',
+  autoplayDirection: "forward",
   backwardBtnProps: {},
-  centerMode: false,
   children: null,
   containerProps: {},
   delay: 0,
   disableNavIfAllVisible: true,
-  easing: 'linear',
+  easing: "linear",
   forwardBtnProps: {},
   hideNavIfAllVisible: true,
   innerProps: {},
@@ -690,4 +647,4 @@ ReactSimplyCarousel.defaultProps = {
   updateOnItemClick: false,
 };
 
-export default ReactSimplyCarousel;
+export default memo(ReactSimplyCarousel);

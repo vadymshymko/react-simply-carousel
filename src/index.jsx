@@ -1,4 +1,12 @@
-import React, { memo, useState, useRef, useEffect, Children } from "react";
+import React, {
+  memo,
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+  Children,
+} from "react";
 import PropTypes from "prop-types";
 
 function ReactSimplyCarousel({ responsiveProps, ...props }) {
@@ -9,11 +17,15 @@ function ReactSimplyCarousel({ responsiveProps, ...props }) {
   const containerRef = useRef(null);
   const innerRef = useRef(null);
   const itemsListRef = useRef(null);
+
   const itemsListDragStartPosRef = useRef(null);
   const isListDraggingRef = useRef(false);
+
   const directionRef = useRef("");
+
   const autoplayTimerRef = useRef(null);
   const resizeTimerRef = useRef(null);
+
   const renderedSlidesCountRef = useRef(0);
 
   const propsByWindowWidth = responsiveProps.reduce(
@@ -29,7 +41,9 @@ function ReactSimplyCarousel({ responsiveProps, ...props }) {
     },
     props
   );
+
   const slidesItems = Children.toArray(propsByWindowWidth.children);
+
   const {
     containerProps: {
       style: containerStyle,
@@ -74,6 +88,7 @@ function ReactSimplyCarousel({ responsiveProps, ...props }) {
     autoplayDirection,
     disableNavIfAllVisible,
     hideNavIfAllVisible,
+    centerMode,
   } = windowWidth
     ? {
         ...propsByWindowWidth,
@@ -92,14 +107,18 @@ function ReactSimplyCarousel({ responsiveProps, ...props }) {
       }
     : props;
 
-  const slides = windowWidth
-    ? [...itemsListRef.current.children].slice(
-        slidesItems.length - positionIndex,
-        slidesItems.length - positionIndex + slidesItems.length
-      )
-    : [];
+  const slides = useMemo(
+    () =>
+      windowWidth
+        ? [...itemsListRef.current.children].slice(
+            slidesItems.length - positionIndex,
+            slidesItems.length - positionIndex + slidesItems.length
+          )
+        : [],
+    [positionIndex, slidesItems.length, windowWidth]
+  );
 
-  const getOffsetCorrectionForEdgeSlides = () => {
+  const getOffsetCorrectionForEdgeSlides = useCallback(() => {
     if (positionIndex - activeSlideIndex === 0) {
       return 0;
     }
@@ -119,26 +138,7 @@ function ReactSimplyCarousel({ responsiveProps, ...props }) {
     }
 
     return 0;
-  };
-
-  const getInnerWidth = () => {
-    if (!windowWidth || !itemsToShow) {
-      return null;
-    }
-
-    return slides.reduce((result, item, index) => {
-      const isItemVisible =
-        (index >= activeSlideIndex && index < activeSlideIndex + itemsToShow) ||
-        (index < activeSlideIndex &&
-          index < activeSlideIndex + itemsToShow - slides.length);
-
-      if (!isItemVisible) {
-        return result;
-      }
-
-      return result + item.offsetWidth;
-    }, 0);
-  };
+  }, [activeSlideIndex, positionIndex]);
 
   const getItemsListOffsetBySlideIndex = (slideIndex) => {
     const offsetByIndex = slides.reduce((total, item, index) => {
@@ -152,9 +152,24 @@ function ReactSimplyCarousel({ responsiveProps, ...props }) {
     return offsetByIndex;
   };
 
-  const innerWidth = getInnerWidth();
-  const innerStyleWidth =
-    innerStyle && innerStyle.width ? innerStyle.width : null;
+  const innerMaxWidth =
+    !windowWidth || !itemsToShow
+      ? null
+      : slides.reduce((result, item, index) => {
+          const isItemVisible =
+            (index >= activeSlideIndex &&
+              index < activeSlideIndex + itemsToShow) ||
+            (index < activeSlideIndex &&
+              index < activeSlideIndex + itemsToShow - slides.length);
+
+          if (!isItemVisible) {
+            return result;
+          }
+
+          return result + item.offsetWidth;
+        }, 0);
+
+  const lastSlideIndex = Children.count(children) - 1;
 
   const isAllSlidesVisible = itemsToShow === slidesItems.length;
 
@@ -172,6 +187,20 @@ function ReactSimplyCarousel({ responsiveProps, ...props }) {
       ? getItemsListOffsetBySlideIndex(activeSlideIndex)
       : 0;
 
+  const activeSlideWidth = windowWidth
+    ? slides[activeSlideIndex].offsetWidth
+    : 0;
+
+  const ofsetCorrectionForCenterMode =
+    windowWidth && centerMode
+      ? -(
+          Math.min(
+            innerMaxWidth || innerRef.current.offsetWidth,
+            innerRef.current.offsetWidth
+          ) - activeSlideWidth
+        ) / 2
+      : 0;
+
   const itemsListTransition =
     !isNewSLideIndex || !(speed || delay)
       ? null
@@ -181,68 +210,80 @@ function ReactSimplyCarousel({ responsiveProps, ...props }) {
       ? 0
       : activeSlideIndexOffset -
         positionIndexOffset +
-        getOffsetCorrectionForEdgeSlides(activeSlideIndex, positionIndex) +
+        ofsetCorrectionForCenterMode +
+        getOffsetCorrectionForEdgeSlides() +
         itemsListRef.current.offsetWidth / 3;
   const itemsListTransform = windowWidth
     ? `translateX(-${itemsListTranslateX}px)`
     : null;
 
-  const getNextSlideIndex = (direction) => {
-    const lastSlideIndex = Children.count(children) - 1;
+  const getNextSlideIndex = useCallback(
+    (direction) => {
+      if (direction === "forward") {
+        const nextSlideIndex = activeSlideIndex + itemsToScroll;
+        const isOnEnd = nextSlideIndex > lastSlideIndex;
+        const newSlideIndex = isOnEnd
+          ? nextSlideIndex - lastSlideIndex - 1
+          : nextSlideIndex;
 
-    if (direction === "forward") {
-      const nextSlideIndex = activeSlideIndex + itemsToScroll;
-      const isOnEnd = nextSlideIndex > lastSlideIndex;
-      const newSlideIndex = isOnEnd
-        ? nextSlideIndex - lastSlideIndex - 1
-        : nextSlideIndex;
-
-      return newSlideIndex;
-    }
-
-    if (direction === "backward") {
-      const nextSlideIndex = activeSlideIndex - itemsToScroll;
-      const isOnStart = nextSlideIndex < 0;
-      const newSlideIndex = isOnStart
-        ? lastSlideIndex + 1 + nextSlideIndex
-        : nextSlideIndex;
-
-      return newSlideIndex;
-    }
-
-    return activeSlideIndex;
-  };
-
-  const stopAutoplay = () => {
-    clearTimeout(autoplayTimerRef.current);
-  };
-
-  const updatePositionIndex = () => {
-    setPositionIndex(activeSlideIndex);
-  };
-
-  const updateActiveSlideIndex = (newActiveSlideIndex, direction) => {
-    itemsListRef.current.style.transition =
-      speed || delay ? `transform ${speed}ms ${easing} ${delay}ms` : null;
-
-    if (newActiveSlideIndex !== activeSlideIndex) {
-      stopAutoplay();
-
-      directionRef.current = direction;
-      onRequestChange(newActiveSlideIndex);
-    } else {
-      itemsListRef.current.style.transform = `translateX(-${
-        itemsListRef.current.offsetWidth / 3
-      }px)`;
-
-      if (!speed && !delay) {
-        updatePositionIndex();
+        return newSlideIndex;
       }
-    }
-  };
 
-  const startAutoplay = () => {
+      if (direction === "backward") {
+        const nextSlideIndex = activeSlideIndex - itemsToScroll;
+        const isOnStart = nextSlideIndex < 0;
+        const newSlideIndex = isOnStart
+          ? lastSlideIndex + 1 + nextSlideIndex
+          : nextSlideIndex;
+
+        return newSlideIndex;
+      }
+
+      return activeSlideIndex;
+    },
+    [activeSlideIndex, itemsToScroll, lastSlideIndex]
+  );
+
+  const stopAutoplay = useCallback(() => {
+    clearTimeout(autoplayTimerRef.current);
+  }, []);
+
+  const updatePositionIndex = useCallback(() => {
+    setPositionIndex(activeSlideIndex);
+  }, [activeSlideIndex]);
+
+  const updateActiveSlideIndex = useCallback(
+    (newActiveSlideIndex, direction) => {
+      directionRef.current = direction;
+      itemsListRef.current.style.transition =
+        speed || delay ? `transform ${speed}ms ${easing} ${delay}ms` : null;
+
+      if (newActiveSlideIndex !== activeSlideIndex) {
+        stopAutoplay();
+        onRequestChange(newActiveSlideIndex);
+      } else {
+        itemsListDragStartPosRef.current = null;
+        isListDraggingRef.current = false;
+
+        itemsListRef.current.style.transform = `translateX(-${
+          ofsetCorrectionForCenterMode + itemsListRef.current.offsetWidth / 3
+        }px)`;
+      }
+    },
+    [
+      activeSlideIndex,
+      ofsetCorrectionForCenterMode,
+      delay,
+      easing,
+      speed,
+      stopAutoplay,
+      onRequestChange,
+    ]
+  );
+
+  const startAutoplay = useCallback(() => {
     if (autoplay) {
+      stopAutoplay();
       autoplayTimerRef.current = setTimeout(() => {
         updateActiveSlideIndex(
           getNextSlideIndex(autoplayDirection),
@@ -250,120 +291,166 @@ function ReactSimplyCarousel({ responsiveProps, ...props }) {
         );
       }, delay);
     }
-  };
+  }, [
+    autoplay,
+    autoplayDirection,
+    updateActiveSlideIndex,
+    getNextSlideIndex,
+    delay,
+    stopAutoplay,
+  ]);
 
-  const handleContainerClickCapture = (event) => {
-    if (isListDraggingRef.current) {
-      event.preventDefault();
-      event.stopPropagation();
+  const handleContainerClickCapture = useCallback(
+    (event) => {
+      if (isListDraggingRef.current) {
+        event.preventDefault();
+        event.stopPropagation();
 
-      if (containerOnClickCapture) {
-        containerOnClickCapture(event);
+        if (containerOnClickCapture) {
+          containerOnClickCapture(event);
+        }
       }
-    }
-  };
+    },
+    [containerOnClickCapture]
+  );
 
-  const handleBackwardBtnClick = () => {
+  const handleBackwardBtnClick = useCallback(() => {
     updateActiveSlideIndex(getNextSlideIndex("backward"), "backward");
-  };
+  }, [updateActiveSlideIndex, getNextSlideIndex]);
 
-  const updateItemsListPosByDragPos = (dragPos) => {
-    const dragPosDiff =
-      itemsListDragStartPosRef.current -
-      dragPos +
-      itemsListRef.current.offsetWidth / 3;
-    const minDragPos = 0;
-    const maxDragPos =
-      itemsListRef.current.offsetWidth - innerRef.current.offsetWidth;
-    const itemsListPos = Math.max(
-      Math.min(minDragPos, -dragPosDiff),
-      -maxDragPos
-    );
+  const updateItemsListPosByDragPos = useCallback(
+    (dragPos) => {
+      const dragPosDiff =
+        itemsListDragStartPosRef.current -
+        dragPos +
+        ofsetCorrectionForCenterMode +
+        itemsListRef.current.offsetWidth / 3;
+      const minDragPos = 0;
+      const maxDragPos =
+        itemsListRef.current.offsetWidth - innerRef.current.offsetWidth;
+      const itemsListPos = Math.max(
+        Math.min(minDragPos, -dragPosDiff),
+        -maxDragPos
+      );
 
-    itemsListRef.current.style.transition = "none";
-    itemsListRef.current.style.transform = `translateX(${itemsListPos}px)`;
-  };
+      itemsListRef.current.style.transition = "none";
+      itemsListRef.current.style.transform = `translateX(${itemsListPos}px)`;
+    },
+    [ofsetCorrectionForCenterMode]
+  );
 
-  const handleItemsListDragEnd = (dragPos) => {
-    const mousePosDiff = itemsListDragStartPosRef.current - dragPos;
-    const activeItemHalfWidth = slides[activeSlideIndex].offsetWidth / 2;
+  const handleItemsListDragEnd = useCallback(
+    (dragPos) => {
+      const mousePosDiff = itemsListDragStartPosRef.current - dragPos;
 
-    if (mousePosDiff > activeItemHalfWidth) {
-      updateActiveSlideIndex(getNextSlideIndex("forward"), "forward");
-    } else if (mousePosDiff < -activeItemHalfWidth) {
-      updateActiveSlideIndex(getNextSlideIndex("backward"), "backward");
-    } else {
-      updateActiveSlideIndex(activeSlideIndex, "forward");
-    }
-  };
+      if (mousePosDiff > activeSlideWidth / 2) {
+        updateActiveSlideIndex(getNextSlideIndex("forward"), "forward");
+      } else if (mousePosDiff < -activeSlideWidth / 2) {
+        updateActiveSlideIndex(getNextSlideIndex("backward"), "backward");
+      } else {
+        updateActiveSlideIndex(activeSlideIndex, "forward");
+      }
+    },
+    [
+      activeSlideIndex,
+      activeSlideWidth,
+      updateActiveSlideIndex,
+      getNextSlideIndex,
+    ]
+  );
 
-  const handleItemsListMouseMove = (event) => {
-    isListDraggingRef.current = true;
+  const handleItemsListMouseMove = useCallback(
+    (event) => {
+      isListDraggingRef.current = true;
 
-    updateItemsListPosByDragPos(event.clientX);
-  };
+      updateItemsListPosByDragPos(event.clientX);
+    },
+    [updateItemsListPosByDragPos]
+  );
 
-  const handleItemsListMouseUp = (event) => {
-    itemsListRef.current.removeEventListener(
-      "mouseout",
-      handleItemsListMouseUp
-    );
-    itemsListRef.current.removeEventListener(
-      "dragstart",
-      handleItemsListMouseUp
-    );
-
-    document.removeEventListener("mousemove", handleItemsListMouseMove);
-    document.removeEventListener("mouseup", handleItemsListMouseUp);
-
-    if (isListDraggingRef.current) {
-      handleItemsListDragEnd(event.clientX);
-    }
-  };
-
-  const handleItemsListMouseDown = (event) => {
-    stopAutoplay();
-
-    if (!isListDraggingRef.current) {
-      itemsListDragStartPosRef.current = event.clientX;
-
-      document.addEventListener("mousemove", handleItemsListMouseMove);
-      document.addEventListener("mouseup", handleItemsListMouseUp);
-
-      itemsListRef.current.addEventListener("mouseout", handleItemsListMouseUp);
-      itemsListRef.current.addEventListener(
+  const handleItemsListMouseUp = useCallback(
+    (event) => {
+      itemsListRef.current.removeEventListener(
+        "mouseout",
+        handleItemsListMouseUp
+      );
+      itemsListRef.current.removeEventListener(
         "dragstart",
         handleItemsListMouseUp
       );
-    }
-  };
 
-  const handleItemsListTouchMove = (event) => {
-    isListDraggingRef.current = true;
-    updateItemsListPosByDragPos(event.touches[0].clientX);
-  };
+      document.removeEventListener("mousemove", handleItemsListMouseMove);
+      document.removeEventListener("mouseup", handleItemsListMouseUp);
 
-  const handleItemsListTouchEnd = (event) => {
-    document.removeEventListener("touchmove", handleItemsListTouchMove);
-    document.removeEventListener("touchend", handleItemsListTouchEnd);
+      if (isListDraggingRef.current) {
+        handleItemsListDragEnd(event.clientX);
+      }
+    },
+    [handleItemsListDragEnd, handleItemsListMouseMove]
+  );
 
-    if (isListDraggingRef.current) {
-      handleItemsListDragEnd(
-        event.changedTouches[event.changedTouches.length - 1].clientX
-      );
-    }
-  };
+  const handleItemsListMouseDown = useCallback(
+    (event) => {
+      stopAutoplay();
 
-  const handleItemsListTouchStart = (event) => {
-    stopAutoplay();
+      if (!isListDraggingRef.current) {
+        itemsListDragStartPosRef.current = event.clientX;
 
-    if (!isListDraggingRef.current) {
-      itemsListDragStartPosRef.current = event.touches[0].clientX;
+        document.addEventListener("mousemove", handleItemsListMouseMove);
+        document.addEventListener("mouseup", handleItemsListMouseUp);
 
-      document.addEventListener("touchmove", handleItemsListTouchMove);
-      document.addEventListener("touchend", handleItemsListTouchEnd);
-    }
-  };
+        itemsListRef.current.addEventListener(
+          "mouseout",
+          handleItemsListMouseUp
+        );
+        itemsListRef.current.addEventListener(
+          "dragstart",
+          handleItemsListMouseUp
+        );
+      }
+    },
+    [handleItemsListMouseMove, handleItemsListMouseUp, stopAutoplay]
+  );
+
+  const handleItemsListTouchMove = useCallback(
+    (event) => {
+      isListDraggingRef.current = true;
+      updateItemsListPosByDragPos(event.touches[0].clientX);
+    },
+    [updateItemsListPosByDragPos]
+  );
+
+  const handleItemsListTouchEnd = useCallback(
+    (event) => {
+      document.removeEventListener("touchmove", handleItemsListTouchMove);
+      document.removeEventListener("touchend", handleItemsListTouchEnd);
+
+      if (isListDraggingRef.current) {
+        handleItemsListDragEnd(
+          event.changedTouches[event.changedTouches.length - 1].clientX
+        );
+      }
+    },
+    [handleItemsListDragEnd, handleItemsListTouchMove]
+  );
+
+  const handleItemsListTouchStart = useCallback(
+    (event) => {
+      stopAutoplay();
+
+      if (!isListDraggingRef.current) {
+        itemsListDragStartPosRef.current = event.touches[0].clientX;
+
+        document.addEventListener("touchmove", handleItemsListTouchMove);
+        document.addEventListener("touchend", handleItemsListTouchEnd);
+      }
+    },
+    [handleItemsListTouchMove, handleItemsListTouchEnd, stopAutoplay]
+  );
+
+  const handleForwardBtnClick = useCallback(() => {
+    updateActiveSlideIndex(getNextSlideIndex("forward"), "forward");
+  }, [updateActiveSlideIndex, getNextSlideIndex]);
 
   const getSlideItemOnClick = ({ direction, index, onClick }) => {
     const slideItemOnClick = (event) => {
@@ -381,10 +468,6 @@ function ReactSimplyCarousel({ responsiveProps, ...props }) {
     };
 
     return slideItemOnClick;
-  };
-
-  const handleForwardBtnClick = () => {
-    updateActiveSlideIndex(getNextSlideIndex("forward"), "forward");
   };
 
   const renderSlidesItems = (items, startIndex, isDisableNav) =>
@@ -440,30 +523,47 @@ function ReactSimplyCarousel({ responsiveProps, ...props }) {
       };
     });
 
-  const updateWindowWidth = () => {
+  const updateWindowWidth = useCallback(() => {
     setWindowWidth(window.innerWidth);
-  };
+  }, []);
 
-  const handleWindowResize = () => {
+  const handleWindowResize = useCallback(() => {
     clearTimeout(resizeTimerRef.current);
+    stopAutoplay();
 
     resizeTimerRef.current = setTimeout(updateWindowWidth, 400);
-  };
+  }, [updateWindowWidth, stopAutoplay]);
 
   useEffect(() => {
     itemsListDragStartPosRef.current = null;
     isListDraggingRef.current = false;
+    directionRef.current = "";
 
-    startAutoplay();
+    if (activeSlideIndex !== positionIndex) {
+      if (!speed && !delay) {
+        updatePositionIndex();
+      }
+    } else {
+      if (onAfterChange) {
+        onAfterChange(activeSlideIndex, positionIndex);
+      }
 
-    if (onAfterChange) {
-      onAfterChange(activeSlideIndex, positionIndex);
+      startAutoplay();
     }
 
     return () => {
       stopAutoplay();
     };
-  }, [positionIndex]);
+  }, [
+    positionIndex,
+    activeSlideIndex,
+    onAfterChange,
+    speed,
+    delay,
+    updatePositionIndex,
+    startAutoplay,
+    stopAutoplay,
+  ]);
 
   useEffect(() => {
     if (windowWidth) {
@@ -473,17 +573,7 @@ function ReactSimplyCarousel({ responsiveProps, ...props }) {
     return () => {
       stopAutoplay();
     };
-  }, [windowWidth]);
-
-  useEffect(() => {
-    if (activeSlideIndex !== positionIndex) {
-      if (!speed && !delay) {
-        updatePositionIndex();
-      }
-    } else {
-      directionRef.current = "";
-    }
-  });
+  }, [windowWidth, stopAutoplay]);
 
   useEffect(() => {
     const itemsListRefDOMElement = itemsListRef.current;
@@ -509,10 +599,15 @@ function ReactSimplyCarousel({ responsiveProps, ...props }) {
         "dragstart",
         handleItemsListMouseUp
       );
-
-      clearTimeout(autoplayTimerRef.current);
     };
-  }, []);
+  }, [
+    handleItemsListMouseMove,
+    handleWindowResize,
+    handleItemsListMouseUp,
+    handleItemsListTouchMove,
+    handleItemsListTouchEnd,
+    updateWindowWidth,
+  ]);
 
   renderedSlidesCountRef.current = 0;
 
@@ -545,10 +640,9 @@ function ReactSimplyCarousel({ responsiveProps, ...props }) {
           display: "flex",
           boxSizing: "border-box",
           flexFlow: "row wrap",
-          maxWidth: "100%",
           padding: "0",
           overflow: "hidden",
-          width: innerWidth ? `${innerWidth}px` : innerStyleWidth,
+          maxWidth: innerMaxWidth ? `${innerMaxWidth}px` : "100%",
           ...innerStyle,
         }}
         // eslint-disable-next-line react/jsx-props-no-spreading
@@ -619,6 +713,7 @@ ReactSimplyCarousel.propTypes = {
   responsiveProps: PropTypes.arrayOf(PropTypes.object),
   speed: PropTypes.number,
   updateOnItemClick: PropTypes.bool,
+  centerMode: PropTypes.bool,
 };
 
 ReactSimplyCarousel.defaultProps = {
@@ -641,6 +736,7 @@ ReactSimplyCarousel.defaultProps = {
   responsiveProps: [],
   speed: 0,
   updateOnItemClick: false,
+  centerMode: false,
 };
 
 export default memo(ReactSimplyCarousel);

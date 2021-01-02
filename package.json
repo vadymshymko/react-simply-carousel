@@ -1,6 +1,6 @@
 {
   "name": "react-simply-carousel",
-  "version": "4.1.2",
+  "version": "4.0.0",
   "description": "Simple react.js carousel component",
   "main": "dist/index.js",
   "files": [
@@ -11,6 +11,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "webpack --mode=production",
+    "build:dev": "webpack --mode=development",
     "lint": "eslint --ext .js,.jsx --fix && prettier --write .",
     "prepublish": "npm run lint && npm run build"
   },
@@ -77,6 +78,8 @@
     "lint-staged": "^10.5.3",
     "path": "^0.12.7",
     "prettier": "^2.2.1",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
     "webpack": "^5.11.1",
     "webpack-bundle-analyzer": "^4.3.0",
     "webpack-cli": "^4.3.0"
@@ -84,12 +87,10 @@
   "dependencies": {
     "@babel/runtime": "^7.12.5",
     "core-js": "^3.8.1",
-    "prop-types": "^15.7.2",
-    "react": "^16.14.0",
-    "react-dom": "^16.14.0"
+    "prop-types": "^15.7.2"
   },
   "peerDependencies": {
-    "react": "^16.8.0",
-    "react-dom": "^16.8.0"
+    "react": "^16.8.0 | ^17.0.0",
+    "react-dom": "^16.8.0 | ^17.0.0"
   }
 }

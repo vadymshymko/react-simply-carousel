@@ -566,14 +566,14 @@ function ReactSimplyCarousel({ responsiveProps, ...props }) {
   ]);
 
   useEffect(() => {
-    if (windowWidth) {
+    if (windowWidth && !autoplayTimerRef.current) {
       startAutoplay();
     }
 
     return () => {
       stopAutoplay();
     };
-  }, [windowWidth, stopAutoplay]);
+  }, [windowWidth, stopAutoplay, startAutoplay]);
 
   useEffect(() => {
     const itemsListRefDOMElement = itemsListRef.current;

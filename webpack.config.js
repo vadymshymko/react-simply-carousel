@@ -36,6 +36,7 @@ module.exports = {
     new CleanWebpackPlugin(),
     new ESLintPlugin({
       extensions: ["js", "jsx"],
+      failOnError: true,
     }),
   ],
   module: {

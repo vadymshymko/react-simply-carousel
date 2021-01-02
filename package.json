@@ -1,6 +1,6 @@
 {
   "name": "react-simply-carousel",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "Simple react.js carousel component",
   "main": "dist/index.js",
   "files": [

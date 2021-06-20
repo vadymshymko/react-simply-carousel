@@ -1,6 +1,6 @@
 {
   "name": "react-simply-carousel",
-  "version": "5.0.1",
+  "version": "5.0.2",
   "description": "Simple react.js carousel component",
   "main": "dist/index.js",
   "files": [
@@ -88,7 +88,7 @@
     "prop-types": "^15.7.2"
   },
   "peerDependencies": {
-    "react": "^16.8 | ^17",
-    "react-dom": "^16.8 | ^17"
+    "react": "^16.8 || ^17",
+    "react-dom": "^16.8 || ^17"
   }
 }

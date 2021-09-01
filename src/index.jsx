@@ -93,6 +93,7 @@ function ReactSimplyCarousel({ responsiveProps, ...props }) {
     disableNavIfEdgeVisible,
     disableNavIfEdgeActive,
     dotsNav,
+    dotsNavWrapperProps,
   } = windowWidth
     ? {
         ...propsByWindowWidth,
@@ -741,35 +742,38 @@ function ReactSimplyCarousel({ responsiveProps, ...props }) {
         </button>
       )}
 
-      {!infinite &&
-        !!showDotsNav &&
-        Array.from({
-          length: Math.ceil(slidesItems.length / itemsToScroll),
-        }).map((_item, index) => (
-          <button
-            type="button"
-            // eslint-disable-next-line react/no-array-index-key
-            key={index}
-            title={index}
-            // eslint-disable-next-line react/jsx-props-no-spreading
-            {...dotsBtnProps}
-            className={`${dotsBtnProps.className || ""} ${
-              index ===
-              Math.ceil((activeSlideIndex - itemsToScroll) / itemsToScroll)
-                ? activeDotClassName
-                : ""
-            }`}
-            onClick={() => {
-              updateActiveSlideIndex(
-                Math.min(index * itemsToScroll, slidesItems.length - 1),
-                Math.min(index * itemsToScroll, slidesItems.length - 1) >
-                  activeSlideIndex
-                  ? "forward"
-                  : "backward"
-              );
-            }}
-          />
-        ))}
+      {!infinite && !!showDotsNav && (
+        // eslint-disable-next-line react/jsx-props-no-spreading
+        <div {...dotsNavWrapperProps}>
+          {Array.from({
+            length: Math.ceil(slidesItems.length / itemsToScroll),
+          }).map((_item, index) => (
+            <button
+              type="button"
+              // eslint-disable-next-line react/no-array-index-key
+              key={index}
+              title={index}
+              // eslint-disable-next-line react/jsx-props-no-spreading
+              {...dotsBtnProps}
+              className={`${dotsBtnProps.className || ""} ${
+                index ===
+                Math.ceil((activeSlideIndex - itemsToScroll) / itemsToScroll)
+                  ? activeDotClassName
+                  : ""
+              }`}
+              onClick={() => {
+                updateActiveSlideIndex(
+                  Math.min(index * itemsToScroll, slidesItems.length - 1),
+                  Math.min(index * itemsToScroll, slidesItems.length - 1) >
+                    activeSlideIndex
+                    ? "forward"
+                    : "backward"
+                );
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -801,6 +805,7 @@ ReactSimplyCarousel.propTypes = {
   disableNavIfEdgeVisible: PropTypes.bool,
   disableNavIfEdgeActive: PropTypes.bool,
   dotsNav: PropTypes.objectOf(PropTypes.any),
+  dotsNavWrapperProps: PropTypes.objectOf(PropTypes.any),
 };
 
 ReactSimplyCarousel.defaultProps = {
@@ -828,6 +833,7 @@ ReactSimplyCarousel.defaultProps = {
   disableNavIfEdgeVisible: true,
   disableNavIfEdgeActive: true,
   dotsNav: {},
+  dotsNavWrapperProps: {},
 };
 
 export default memo(ReactSimplyCarousel);

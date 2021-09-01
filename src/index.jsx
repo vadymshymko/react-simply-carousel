@@ -756,10 +756,7 @@ function ReactSimplyCarousel({ responsiveProps, ...props }) {
               // eslint-disable-next-line react/jsx-props-no-spreading
               {...dotsBtnProps}
               className={`${dotsBtnProps.className || ""} ${
-                index ===
-                Math.ceil(
-                  Math.max(0, activeSlideIndex - itemsToScroll) / itemsToScroll
-                )
+                index * itemsToScroll === activeSlideIndex
                   ? activeDotClassName
                   : ""
               }`}

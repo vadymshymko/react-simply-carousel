@@ -757,7 +757,9 @@ function ReactSimplyCarousel({ responsiveProps, ...props }) {
               {...dotsBtnProps}
               className={`${dotsBtnProps.className || ""} ${
                 index ===
-                Math.ceil((activeSlideIndex - itemsToScroll) / itemsToScroll)
+                Math.ceil(
+                  Math.max(0, activeSlideIndex - itemsToScroll) / itemsToScroll
+                )
                   ? activeDotClassName
                   : ""
               }`}

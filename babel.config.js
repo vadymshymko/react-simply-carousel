@@ -1,14 +1,20 @@
 module.exports = {
-  presets: ["@babel/preset-env", "@babel/preset-react"],
-  plugins: [
+  presets: [
     [
-      "transform-react-remove-prop-types",
+      '@babel/preset-env',
       {
-        removeImport: true,
-        additionalLibraries: ["prop-types"],
+        useBuiltIns: 'entry',
+        corejs: 3,
       },
     ],
-
-    ["transform-remove-console", { exclude: ["error", "warn"] }],
+    '@babel/preset-react',
+    // [
+    //   '@babel/preset-typescript',
+    //   {
+    //     isTSX: true,
+    //     allExtensions: true,
+    //   },
+    // ],
   ],
+  plugins: [['transform-remove-console', { exclude: ['error', 'warn'] }]],
 };

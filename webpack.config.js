@@ -1,14 +1,17 @@
 const path = require('path');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = {
   target: 'web',
-  entry: './lib-esm/index.jsx',
+  entry: './src/index.tsx',
   output: {
     filename: 'index.js',
-    path: path.resolve(__dirname, 'dist-ts'),
-    library: 'ReactSimplyCarousel',
-    libraryTarget: 'umd',
+    path: path.resolve(__dirname, 'dist'),
+    library: {
+      name: 'ReactSimplyCarousel',
+      type: 'umd',
+      umdNamedDefine: true,
+      export: 'default',
+    },
     globalObject: 'this',
   },
   externals: {
@@ -31,11 +34,10 @@ module.exports = {
     extensions: ['.js', '.jsx'],
     modules: [path.resolve(__dirname, './src'), 'node_modules'],
   },
-  plugins: [new CleanWebpackPlugin()],
   module: {
     rules: [
       {
-        test: /\.jsx?$/,
+        test: /\.tsx?$/,
         use: 'babel-loader',
         exclude: /node_modules/,
       },

@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import React, {
   memo,
   useState,
@@ -13,6 +12,7 @@ import React, {
   MouseEvent,
   TouchEvent,
   ReactNode,
+  TransitionEvent,
 } from 'react';
 
 type NavDirection = 'forward' | 'backward';
@@ -74,7 +74,7 @@ function ReactSimplyCarousel({
   const innerRef = useRef<HTMLDivElement>(null);
   const itemsListRef = useRef<HTMLDivElement>(null);
 
-  const itemsListDragStartPosRef = useRef<null | number>(null);
+  const itemsListDragStartPosRef = useRef<number>(0);
   const isListDraggingRef = useRef(false);
 
   const directionRef = useRef('');
@@ -182,15 +182,13 @@ function ReactSimplyCarousel({
     }
 
     if (infinite) {
-      return [...(itemsListRef.current!.children as HTMLCollection)].slice(
+      return [...itemsListRef.current!.children].slice(
         slidesItems.length - positionIndex,
         slidesItems.length - positionIndex + slidesItems.length
       ) as HTMLElement[];
     }
 
-    return [
-      ...(itemsListRef.current!.children as HTMLCollection),
-    ] as HTMLElement[];
+    return [...itemsListRef.current!.children] as HTMLElement[];
   }, [positionIndex, slidesItems.length, windowWidth, infinite]);
 
   const itemsListMaxTranslateX = windowWidth
@@ -216,7 +214,7 @@ function ReactSimplyCarousel({
   const innerMaxWidth = useMemo(
     () =>
       !windowWidth || !itemsToShow
-        ? null
+        ? 0
         : slides.reduce((result, item, index) => {
             const isItemVisible =
               (index >= activeSlideIndex &&
@@ -346,7 +344,7 @@ function ReactSimplyCarousel({
         clearTimeout(autoplayTimerRef.current);
         onRequestChange(newActiveSlideIndex);
       } else {
-        itemsListDragStartPosRef.current = null;
+        itemsListDragStartPosRef.current = 0;
         isListDraggingRef.current = false;
 
         itemsListRef.current!.style.transform = `translateX(-${
@@ -417,7 +415,7 @@ function ReactSimplyCarousel({
           : event.clientX;
 
       const dragPosDiff =
-        (itemsListDragStartPosRef.current as number) -
+        itemsListDragStartPosRef.current -
         dragPos +
         offsetCorrectionForCenterMode +
         slidesWidth +
@@ -459,8 +457,7 @@ function ReactSimplyCarousel({
             ? event.changedTouches[event.changedTouches.length - 1].clientX
             : event.clientX;
 
-        const mousePosDiff =
-          (itemsListDragStartPosRef.current as number) - dragPos;
+        const mousePosDiff = itemsListDragStartPosRef.current - dragPos;
 
         if (mousePosDiff > activeSlideWidth / 2) {
           updateActiveSlideIndex(getNextSlideIndex('forward'), 'forward');
@@ -499,6 +496,10 @@ function ReactSimplyCarousel({
           handleItemsListDragEnd
         );
       }
+
+      if (onItemsListMouseDown) {
+        onItemsListMouseDown(event);
+      }
     },
     [handleItemsListDrag, handleItemsListDragEnd]
   );
@@ -513,13 +514,24 @@ function ReactSimplyCarousel({
         document.addEventListener('touchmove', handleItemsListDrag);
         document.addEventListener('touchend', handleItemsListDragEnd);
       }
+
+      if (onItemsListTouchStart) {
+        onItemsListTouchStart(event);
+      }
     },
     [handleItemsListDrag, handleItemsListDragEnd]
   );
 
-  const handleItemsListTransitionEnd = useCallback(() => {
-    setPositionIndex(activeSlideIndex);
-  }, [activeSlideIndex]);
+  const handleItemsListTransitionEnd = useCallback(
+    (event: TransitionEvent<HTMLDivElement>) => {
+      setPositionIndex(activeSlideIndex);
+
+      if (onItemsListTransitionEnd) {
+        onItemsListTransitionEnd(event);
+      }
+    },
+    [activeSlideIndex]
+  );
 
   const handleForwardBtnClick = useCallback(() => {
     updateActiveSlideIndex(getNextSlideIndex('forward'), 'forward');
@@ -613,7 +625,7 @@ function ReactSimplyCarousel({
     });
 
   useEffect(() => {
-    itemsListDragStartPosRef.current = null;
+    itemsListDragStartPosRef.current = 0;
     isListDraggingRef.current = false;
     directionRef.current = '';
 
@@ -846,35 +858,5 @@ function ReactSimplyCarousel({
     </div>
   );
 }
-
-// ReactSimplyCarousel.propTypes = {
-
-// };
-
-// ReactSimplyCarousel.defaultProps = {
-//   activeSlideProps: {},
-//   autoplay: false,
-//   autoplayDirection: "forward",
-//   backwardBtnProps: {},
-//   children: null,
-//   containerProps: {},
-//   delay: 0,
-//   disableNavIfAllVisible: true,
-//   easing: "linear",
-//   forwardBtnProps: {},
-//   hideNavIfAllVisible: true,
-//   innerProps: {},
-//   itemsListProps: {},
-//   itemsToScroll: 1,
-//   itemsToShow: 0,
-//   onAfterChange: null,
-//   responsiveProps: [],
-//   speed: 0,
-//   updateOnItemClick: false,
-//   centerMode: false,
-//   infinite: true,
-//   disableNavIfEdgeVisible: true,
-//   disableNavIfEdgeActive: true,
-// };
 
 export default memo(ReactSimplyCarousel);

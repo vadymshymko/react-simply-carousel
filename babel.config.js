@@ -8,13 +8,13 @@ module.exports = {
       },
     ],
     '@babel/preset-react',
-    // [
-    //   '@babel/preset-typescript',
-    //   {
-    //     isTSX: true,
-    //     allExtensions: true,
-    //   },
-    // ],
+    [
+      '@babel/preset-typescript',
+      {
+        isTSX: true,
+        allExtensions: true,
+      },
+    ],
   ],
   plugins: [['transform-remove-console', { exclude: ['error', 'warn'] }]],
 };

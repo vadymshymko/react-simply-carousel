@@ -1,9 +1,8 @@
 # react-simply-carousel
 
 [![npm version](https://badgen.net/npm/v/react-simply-carousel)](https://www.npmjs.com/package/react-simply-carousel)
-![minified](https://badgen.net/bundlephobia/min/react-simply-carousel)
-![minified + gzip](https://badgen.net/bundlephobia/minzip/react-simply-carousel)
-![typescript](https://badgen.net/npm/types/react-simply-carousel)
+[![minified + gzip](https://badgen.net/bundlephobia/minzip/react-simply-carousel)](https://bundlephobia.com/package/react-simply-carousel@latest)
+[![typescript](https://badgen.net/npm/types/react-simply-carousel)](https://unpkg.com/react-simply-carousel@6.0.0/dist/index.d.ts)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/vadymshymko/react-simply-carousel/blob/master/LICENSE)
 
 A simple, lightweight, fully controlled isomorphic (with SSR support) React.js carousel component. Touch enabled and responsive. With support for autoplay and infinity options. [Fully customizable](#props)

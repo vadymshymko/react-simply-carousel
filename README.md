@@ -6,8 +6,7 @@
 ![typescript](https://badgen.net/npm/types/react-simply-carousel)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/vadymshymko/react-simply-carousel/blob/master/LICENSE)
 
-Simple && small controlled React.js carousel component. Touch enabled and responsive. With autoplay and infinite options support.
-[Lightweight](https://bundlephobia.com/package/react-simply-carousel) and [fully customizable](#props).
+A simple, lightweight, fully controlled isomorphic (with SSR support) React.js carousel component. Touch enabled and responsive. With support for autoplay and infinity options. [Fully customizable](#props)
 
 ## Table of contents
 

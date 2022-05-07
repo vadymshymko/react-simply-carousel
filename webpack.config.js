@@ -1,49 +1,44 @@
-const path = require("path");
-const { CleanWebpackPlugin } = require("clean-webpack-plugin");
-const ESLintPlugin = require("eslint-webpack-plugin");
+const path = require('path');
 
 module.exports = {
-  target: "web",
-  entry: "./src/index.jsx",
+  target: 'web',
+  entry: './src/index.tsx',
   output: {
-    filename: "index.js",
-    path: path.resolve(__dirname, "dist"),
-    library: "ReactSimplyCarousel",
-    libraryTarget: "umd",
-    globalObject: "this",
+    filename: 'index.js',
+    path: path.resolve(__dirname, 'dist'),
+    library: {
+      name: 'ReactSimplyCarousel',
+      type: 'umd',
+      umdNamedDefine: true,
+      export: 'default',
+    },
+    globalObject: 'this',
   },
   externals: {
     react: {
-      root: "React",
-      commonjs2: "react",
-      commonjs: "react",
-      amd: "react",
-      umd: "react",
+      root: 'React',
+      commonjs2: 'react',
+      commonjs: 'react',
+      amd: 'react',
+      umd: 'react',
     },
-    "react-dom": {
-      root: "ReactDOM",
-      commonjs2: "react-dom",
-      commonjs: "react-dom",
-      amd: "react-dom",
-      umd: "react-dom",
+    'react-dom': {
+      root: 'ReactDOM',
+      commonjs2: 'react-dom',
+      commonjs: 'react-dom',
+      amd: 'react-dom',
+      umd: 'react-dom',
     },
   },
   resolve: {
-    extensions: [".js", ".jsx"],
-    modules: [path.resolve(__dirname, "./src"), "node_modules"],
+    extensions: ['.js', '.jsx'],
+    modules: [path.resolve(__dirname, './src'), 'node_modules'],
   },
-  plugins: [
-    new CleanWebpackPlugin(),
-    new ESLintPlugin({
-      extensions: ["js", "jsx"],
-      failOnError: true,
-    }),
-  ],
   module: {
     rules: [
       {
-        test: /\.jsx?$/,
-        use: "babel-loader",
+        test: /\.tsx?$/,
+        use: 'babel-loader',
         exclude: /node_modules/,
       },
     ],

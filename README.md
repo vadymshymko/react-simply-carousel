@@ -1,10 +1,12 @@
 # react-simply-carousel
 
-[![npm version](https://img.shields.io/npm/v/react-simply-carousel.svg?style=flat)](https://www.npmjs.com/package/react-simply-carousel)
-![npm bundle size](https://img.shields.io/bundlephobia/minzip/react-simply-carousel@latest?label=size)
+[![npm version](https://badgen.net/npm/v/react-simply-carousel)](https://www.npmjs.com/package/react-simply-carousel)
+![minified](https://badgen.net/bundlephobia/min/react-simply-carousel)
+![minified + gzip](https://badgen.net/bundlephobia/minzip/react-simply-carousel)
+![typescript](https://badgen.net/npm/types/react-simply-carousel)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/vadymshymko/react-simply-carousel/blob/master/LICENSE)
 
-Simple && small controlled React.js carousel component (touch enabled, infnite and responsive)
+A simple, lightweight, fully controlled isomorphic (with SSR support) React.js carousel component. Touch enabled and responsive. With support for autoplay and infinity options. [Fully customizable](#props)
 
 ## Table of contents
 
@@ -32,42 +34,100 @@ yarn add react-simply-carousel
 #### Basic Example:
 
 ```js
-import React, { Component } from "react";
-import Carousel from "react-simply-carousel";
+import { useState } from 'react';
+import ReactSimplyCarousel from 'react-simply-carousel';
 
-class App extends Component {
-  state = {
-    activeSlideIndex: 0,
-  };
+function ReactSimplyCarouselExample() {
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
-  setActiveSlideIndex = (newActiveSlideIndex) => {
-    this.setState({
-      activeSlideIndex: newActiveSlideIndex,
-    });
-  };
-
-  render() {
-    return (
-      <Carousel
-        activeSlideIndex={this.state.activeSlideIndex}
-        onRequestChange={this.setActiveSlideIndex}
-        itemsToShow={3}
-        itemsToScroll={3}
+  return (
+    <div>
+      <ReactSimplyCarousel
+        activeSlideIndex={activeSlideIndex}
+        onRequestChange={setActiveSlideIndex}
+        itemsToShow={1}
+        itemsToScroll={1}
+        forwardBtnProps={{
+          //here you can also pass className, or any other button element attributes
+          style: {
+            alignSelf: 'center',
+            background: 'black',
+            border: 'none',
+            borderRadius: '50%',
+            color: 'white',
+            cursor: 'pointer',
+            fontSize: '20px',
+            height: 30,
+            lineHeight: 1,
+            textAlign: 'center',
+            width: 30,
+          },
+          children: <span>{`>`}</span>,
+        }}
+        backwardBtnProps={{
+          //here you can also pass className, or any other button element attributes
+          style: {
+            alignSelf: 'center',
+            background: 'black',
+            border: 'none',
+            borderRadius: '50%',
+            color: 'white',
+            cursor: 'pointer',
+            fontSize: '20px',
+            height: 30,
+            lineHeight: 1,
+            textAlign: 'center',
+            width: 30,
+          },
+          children: <span>{`<`}</span>,
+        }}
+        responsiveProps={[
+          {
+            itemsToShow: 2,
+            itemsToScroll: 2,
+            minWidth: 768,
+          },
+        ]}
+        speed={400}
+        easing="linear"
       >
-        <div style={{ width: 300, height: 300 }}>slide 0</div>
-        <div style={{ width: 300, height: 300 }}>slide 1</div>
-        <div style={{ width: 300, height: 300 }}>slide 2</div>
-        <div style={{ width: 300, height: 300 }}>slide 3</div>
-        <div style={{ width: 300, height: 300 }}>slide 4</div>
-        <div style={{ width: 300, height: 300 }}>slide 5</div>
-        <div style={{ width: 300, height: 300 }}>slide 6</div>
-        <div style={{ width: 300, height: 300 }}>slide 7</div>
-        <div style={{ width: 300, height: 300 }}>slide 8</div>
-        <div style={{ width: 300, height: 300 }}>slide 9</div>
-      </Carousel>
-    );
-  }
+        {/* here you can also pass any other element attributes. Also, you can use your custom components as slides */}
+        <div style={{ width: 300, height: 300, background: '#ff80ed' }}>
+          slide 0
+        </div>
+        <div style={{ width: 300, height: 300, background: '#065535' }}>
+          slide 1
+        </div>
+        <div style={{ width: 300, height: 300, background: '#000000' }}>
+          slide 2
+        </div>
+        <div style={{ width: 300, height: 300, background: '#133337' }}>
+          slide 3
+        </div>
+        <div style={{ width: 300, height: 300, background: '#ffc0cb' }}>
+          slide 4
+        </div>
+        <div style={{ width: 300, height: 300, background: '#ffffff' }}>
+          slide 5
+        </div>
+        <div style={{ width: 300, height: 300, background: '#ffe4e1' }}>
+          slide 6
+        </div>
+        <div style={{ width: 300, height: 300, background: '#008080' }}>
+          slide 7
+        </div>
+        <div style={{ width: 300, height: 300, background: '#ff0000' }}>
+          slide 8
+        </div>
+        <div style={{ width: 300, height: 300, background: '#e6e6fa' }}>
+          slide 9
+        </div>
+      </ReactSimplyCarousel>
+    </div>
+  );
 }
+
+export default ReactSimplyCarouselExample;
 ```
 
 ## Props

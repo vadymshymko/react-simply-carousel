@@ -19,6 +19,13 @@ type NavDirection = 'forward' | 'backward';
 
 type NavBtnProps = ButtonHTMLAttributes<HTMLButtonElement> & { show?: boolean };
 
+type DotsNav = {
+  show?: boolean;
+  containerProps?: HTMLAttributes<HTMLDivElement>;
+  itemBtnProps?: ButtonHTMLAttributes<HTMLButtonElement>;
+  activeItemBtnProps?: ButtonHTMLAttributes<HTMLButtonElement>;
+};
+
 type ReactSimplyCarouselStaticProps = {
   activeSlideIndex: number;
   activeSlideProps?: HTMLAttributes<any>;
@@ -47,11 +54,7 @@ type ReactSimplyCarouselStaticProps = {
   infinite?: boolean;
   disableNavIfEdgeVisible?: boolean;
   disableNavIfEdgeActive?: boolean;
-  dotsNav?: {
-    show?: boolean;
-    activeClassName?: string;
-  } & ButtonHTMLAttributes<HTMLButtonElement>;
-  dotsNavWrapperProps?: HTMLAttributes<HTMLDivElement>;
+  dotsNav?: DotsNav;
 };
 
 type ReactSimplyCarouselResponsiveProps = (Omit<
@@ -151,7 +154,6 @@ function ReactSimplyCarousel({
     disableNavIfEdgeVisible = true,
     disableNavIfEdgeActive = true,
     dotsNav = {},
-    dotsNavWrapperProps = {},
   } = windowWidth
     ? {
         ...propsByWindowWidth,
@@ -172,9 +174,14 @@ function ReactSimplyCarousel({
 
   const {
     show: showDotsNav = false,
-    activeClassName: activeDotClassName = '',
-    ...dotsBtnProps
-  } = dotsNav || {};
+    containerProps: dotsNavContainerProps = {},
+    itemBtnProps: dotsNavBtnProps = {},
+    activeItemBtnProps: dotsNavActiveBtnProps = {},
+  } = (dotsNav as DotsNav) || {};
+
+  const itemsListChilds = windowWidth
+    ? [...itemsListRef.current!.children]
+    : [];
 
   const slides = useMemo(() => {
     if (!windowWidth) {
@@ -182,14 +189,20 @@ function ReactSimplyCarousel({
     }
 
     if (infinite) {
-      return [...itemsListRef.current!.children].slice(
+      return itemsListChilds.slice(
         slidesItems.length - positionIndex,
         slidesItems.length - positionIndex + slidesItems.length
       ) as HTMLElement[];
     }
 
-    return [...itemsListRef.current!.children] as HTMLElement[];
-  }, [positionIndex, slidesItems.length, windowWidth, infinite]);
+    return itemsListChilds as HTMLElement[];
+  }, [
+    positionIndex,
+    slidesItems.length,
+    windowWidth,
+    infinite,
+    itemsListChilds,
+  ]);
 
   const itemsListMaxTranslateX = windowWidth
     ? itemsListRef.current!.offsetWidth - innerRef.current!.offsetWidth
@@ -720,8 +733,10 @@ function ReactSimplyCarousel({
       onClickCapture={handleContainerClickCapture}
       style={{
         display: 'flex',
+        flexFlow: 'row wrap',
         boxSizing: 'border-box',
         justifyContent: 'center',
+        width: `100%`,
         ...containerStyle,
       }}
       {...containerProps}
@@ -761,7 +776,7 @@ function ReactSimplyCarousel({
           flexFlow: 'row wrap',
           padding: '0',
           overflow: 'hidden',
-          maxWidth: innerMaxWidth ? `${innerMaxWidth}px` : '100%',
+          maxWidth: innerMaxWidth ? `${innerMaxWidth}px` : 0,
         }}
         ref={innerRef}
       >
@@ -826,8 +841,11 @@ function ReactSimplyCarousel({
         </button>
       )}
 
-      {!infinite && !!showDotsNav && (
-        <div {...dotsNavWrapperProps}>
+      {!!showDotsNav && (
+        <div
+          style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+          {...dotsNavContainerProps}
+        >
           {Array.from({
             length: Math.ceil(slidesItems.length / itemsToScroll),
           }).map((_item, index) => (
@@ -836,12 +854,11 @@ function ReactSimplyCarousel({
               // eslint-disable-next-line react/no-array-index-key
               key={index}
               title={`${index}`}
-              {...dotsBtnProps}
-              className={`${dotsBtnProps.className || ''} ${
-                index * itemsToScroll === activeSlideIndex
-                  ? activeDotClassName
-                  : ''
-              }`}
+              {...dotsNavBtnProps}
+              {...(Math.min(index * itemsToScroll, slidesItems.length - 1) ===
+              activeSlideIndex
+                ? dotsNavActiveBtnProps
+                : {})}
               onClick={() => {
                 updateActiveSlideIndex(
                   Math.min(index * itemsToScroll, slidesItems.length - 1),

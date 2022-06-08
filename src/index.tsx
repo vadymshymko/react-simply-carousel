@@ -55,6 +55,7 @@ type ReactSimplyCarouselStaticProps = {
   disableNavIfEdgeVisible?: boolean;
   disableNavIfEdgeActive?: boolean;
   dotsNav?: DotsNav;
+  persistentChangeCallbacks?: boolean;
 };
 
 type ReactSimplyCarouselResponsiveProps = (Omit<
@@ -154,6 +155,7 @@ function ReactSimplyCarousel({
     disableNavIfEdgeVisible = true,
     disableNavIfEdgeActive = true,
     dotsNav = {},
+    persistentChangeCallbacks = false,
   } = windowWidth
     ? {
         ...propsByWindowWidth,
@@ -353,7 +355,10 @@ function ReactSimplyCarousel({
       itemsListRef.current!.style.transition =
         speed || delay ? `transform ${speed}ms ${easing} ${delay}ms` : 'none';
 
-      if (newActiveSlideIndex !== activeSlideIndex) {
+      if (
+        newActiveSlideIndex !== activeSlideIndex ||
+        persistentChangeCallbacks
+      ) {
         clearTimeout(autoplayTimerRef.current);
         onRequestChange(newActiveSlideIndex);
       } else {
@@ -368,6 +373,7 @@ function ReactSimplyCarousel({
       }
     },
     [
+      persistentChangeCallbacks,
       activeSlideIndex,
       offsetCorrectionForCenterMode,
       delay,

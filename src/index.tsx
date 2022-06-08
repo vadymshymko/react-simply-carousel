@@ -155,7 +155,7 @@ function ReactSimplyCarousel({
     disableNavIfEdgeVisible = true,
     disableNavIfEdgeActive = true,
     dotsNav = {},
-    persistentChangeCallbacks,
+    persistentChangeCallbacks = false,
   } = windowWidth
     ? {
         ...propsByWindowWidth,

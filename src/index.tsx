@@ -56,6 +56,7 @@ type ReactSimplyCarouselStaticProps = {
   disableNavIfEdgeActive?: boolean;
   dotsNav?: DotsNav;
   persistentChangeCallbacks?: boolean;
+  showSlidesBeforeInit?: boolean;
 };
 
 type ReactSimplyCarouselResponsiveProps = (Omit<
@@ -156,6 +157,7 @@ function ReactSimplyCarousel({
     disableNavIfEdgeActive = true,
     dotsNav = {},
     persistentChangeCallbacks = false,
+    showSlidesBeforeInit = false,
   } = windowWidth
     ? {
         ...propsByWindowWidth,
@@ -782,7 +784,13 @@ function ReactSimplyCarousel({
           flexFlow: 'row wrap',
           padding: '0',
           overflow: 'hidden',
-          maxWidth: innerMaxWidth ? `${innerMaxWidth}px` : 0,
+          // eslint-disable-next-line no-nested-ternary
+          maxWidth: innerMaxWidth
+            ? `${innerMaxWidth}px`
+            : !innerMaxWidth && showSlidesBeforeInit
+            ? undefined
+            : 0,
+          flex: !innerMaxWidth && showSlidesBeforeInit ? `1 0` : undefined,
         }}
         ref={innerRef}
       >

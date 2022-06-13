@@ -787,10 +787,15 @@ function ReactSimplyCarousel({
           // eslint-disable-next-line no-nested-ternary
           maxWidth: innerMaxWidth
             ? `${innerMaxWidth}px`
-            : !innerMaxWidth && showSlidesBeforeInit
+            : (!innerMaxWidth && showSlidesBeforeInit) ||
+              (windowWidth && !innerMaxWidth)
             ? undefined
             : 0,
-          flex: !innerMaxWidth && showSlidesBeforeInit ? `1 0` : undefined,
+          flex:
+            (!innerMaxWidth && showSlidesBeforeInit) ||
+            (windowWidth && !innerMaxWidth)
+              ? `1 0`
+              : undefined,
         }}
         ref={innerRef}
       >

@@ -105,6 +105,7 @@ function getVivisbleSidesItems({
   offsetCorrectionForInfiniteMode,
   infinite,
   positionIndex,
+  innerMaxWidth,
 }: {
   activeSlideIndex: number;
   itemsListRef: RefObject<HTMLDivElement>;
@@ -113,6 +114,7 @@ function getVivisbleSidesItems({
   offsetCorrectionForInfiniteMode: number;
   infinite: boolean;
   positionIndex: number;
+  innerMaxWidth: number;
 }) {
   const slidesHTMLElements = getSlidesHTMLElements({
     infinite,
@@ -123,7 +125,8 @@ function getVivisbleSidesItems({
   const start = infinite
     ? offsetCorrectionForInfiniteMode + offsetCorrectionForCenterMode
     : Math.min(
-        itemsListRef.current!.offsetWidth - innerRef.current!.offsetWidth,
+        itemsListRef.current!.offsetWidth -
+          (innerMaxWidth || innerRef.current!.offsetWidth),
         slidesHTMLElements.reduce((res, item, index) => {
           if (index < activeSlideIndex) {
             return res + item.offsetWidth;
@@ -132,7 +135,7 @@ function getVivisbleSidesItems({
           return res;
         }, 0)
       );
-  const end = start + innerRef.current!.offsetWidth;
+  const end = start + (innerMaxWidth || innerRef.current!.offsetWidth);
 
   const slidesHTMLElementsInRender = infinite
     ? [
@@ -221,6 +224,7 @@ function ReactSimplyCarousel({
   const resizeTimerRef = useRef<any>(null);
 
   const renderedSlidesCountRef = useRef(0);
+  const firstRenderSlideIndexRef = useRef(positionIndex);
 
   const propsByWindowWidth = responsiveProps.reduce(
     (result, { minWidth = 0, maxWidth = null, ...item } = {}) => {
@@ -324,27 +328,11 @@ function ReactSimplyCarousel({
   // eslint-disable-next-line no-nested-ternary
   const slidesHTMLElements = !windowWidth
     ? []
-    : getSlidesHTMLElements({ infinite, positionIndex, itemsListRef });
-
-  const itemsListMaxTranslateX = windowWidth
-    ? itemsListRef.current!.offsetWidth - innerRef.current!.offsetWidth
-    : 0;
-
-  const getItemsListOffsetBySlideIndex = (slideIndex: number) => {
-    const offsetByIndex = slidesHTMLElements.reduce((total, item, index) => {
-      if (index >= slideIndex) {
-        return total;
-      }
-
-      return total + (item.offsetWidth || 0);
-    }, 0);
-
-    if (infinite) {
-      return offsetByIndex;
-    }
-
-    return Math.min(itemsListMaxTranslateX, offsetByIndex);
-  };
+    : getSlidesHTMLElements({
+        infinite,
+        positionIndex: firstRenderSlideIndexRef.current,
+        itemsListRef,
+      });
 
   const innerMaxWidth =
     !windowWidth || !itemsToShow
@@ -363,6 +351,27 @@ function ReactSimplyCarousel({
 
           return result + item.offsetWidth;
         }, 0);
+
+  const itemsListMaxTranslateX = windowWidth
+    ? itemsListRef.current!.offsetWidth -
+      (innerMaxWidth || innerRef.current!.offsetWidth)
+    : 0;
+
+  const getItemsListOffsetBySlideIndex = (slideIndex: number) => {
+    const offsetByIndex = slidesHTMLElements.reduce((total, item, index) => {
+      if (index >= slideIndex) {
+        return total;
+      }
+
+      return total + (item.offsetWidth || 0);
+    }, 0);
+
+    if (infinite) {
+      return offsetByIndex;
+    }
+
+    return Math.min(itemsListMaxTranslateX, offsetByIndex);
+  };
 
   const lastSlideIndex = Children.count(children) - 1;
 
@@ -389,12 +398,8 @@ function ReactSimplyCarousel({
   const isCenterModeEnabled = centerMode && infinite;
   const offsetCorrectionForCenterMode =
     windowWidth && isCenterModeEnabled
-      ? -(
-          Math.min(
-            innerMaxWidth || innerRef.current!.offsetWidth,
-            innerRef.current!.offsetWidth
-          ) - activeSlideWidth
-        ) / 2
+      ? -((innerMaxWidth || innerRef.current!.offsetWidth) - activeSlideWidth) /
+        2
       : 0;
 
   const offsetCorrectionForInfiniteMode =
@@ -436,14 +441,15 @@ function ReactSimplyCarousel({
         innerRef,
         offsetCorrectionForCenterMode,
         infinite,
-        positionIndex,
+        positionIndex: firstRenderSlideIndexRef.current,
         offsetCorrectionForInfiniteMode,
+        innerMaxWidth: 0,
       })
-    : ({
+    : {
         visibleSlides: [],
         isFirstSlideVisible: false,
         isLastSlideVisible: false,
-      } as VisibleSlidesState);
+      };
 
   const getNextSlideIndex = useCallback(
     (direction: NavDirection) => {
@@ -500,6 +506,7 @@ function ReactSimplyCarousel({
             itemsListRef,
             offsetCorrectionForCenterMode,
             offsetCorrectionForInfiniteMode,
+            innerMaxWidth,
           })
         );
       } else {
@@ -524,6 +531,7 @@ function ReactSimplyCarousel({
       infinite,
       itemsListTranslateX,
       positionIndex,
+      innerMaxWidth,
     ]
   );
 
@@ -854,11 +862,15 @@ function ReactSimplyCarousel({
       clearTimeout(autoplayTimerRef.current);
 
       resizeTimerRef.current = setTimeout(() => {
-        setWindowWidth(window.innerWidth);
+        if (windowWidth !== window.innerWidth) {
+          setWindowWidth(window.innerWidth);
+        }
       }, 400);
     }
 
-    setWindowWidth(window.innerWidth);
+    if (windowWidth !== window.innerWidth) {
+      setWindowWidth(window.innerWidth);
+    }
 
     window.addEventListener('resize', handleWindowResize);
 
@@ -880,9 +892,11 @@ function ReactSimplyCarousel({
         handleItemsListDragEnd
       );
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleItemsListDrag, handleItemsListDragEnd]);
 
   renderedSlidesCountRef.current = 0;
+  firstRenderSlideIndexRef.current = positionIndex;
 
   return (
     <div
@@ -933,17 +947,8 @@ function ReactSimplyCarousel({
           padding: '0',
           overflow: 'hidden',
           // eslint-disable-next-line no-nested-ternary
-          maxWidth: innerMaxWidth
-            ? `${innerMaxWidth}px`
-            : (!innerMaxWidth && showSlidesBeforeInit) ||
-              (windowWidth && !innerMaxWidth)
-            ? undefined
-            : 0,
-          flex:
-            (!innerMaxWidth && showSlidesBeforeInit) ||
-            (windowWidth && !innerMaxWidth)
-              ? `1 0`
-              : undefined,
+          maxWidth: innerMaxWidth ? `${innerMaxWidth}px` : undefined,
+          flex: !innerMaxWidth ? `1 0` : undefined,
         }}
         ref={innerRef}
       >

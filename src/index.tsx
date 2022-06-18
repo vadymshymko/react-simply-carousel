@@ -4,7 +4,6 @@ import React, {
   useRef,
   useEffect,
   useCallback,
-  useMemo,
   Children,
   HTMLAttributes,
   ButtonHTMLAttributes,
@@ -13,6 +12,7 @@ import React, {
   TouchEvent,
   ReactNode,
   TransitionEvent,
+  RefObject,
 } from 'react';
 
 type NavDirection = 'forward' | 'backward';
@@ -26,9 +26,16 @@ type DotsNav = {
   activeItemBtnProps?: ButtonHTMLAttributes<HTMLButtonElement>;
 };
 
+type VisibleSlidesState = {
+  isFirstSlideVisible: boolean;
+  isLastSlideVisible: boolean;
+  visibleSlides: { slideIndex: number; isFullyVisible: boolean }[];
+};
+
 type ReactSimplyCarouselStaticProps = {
   activeSlideIndex: number;
   activeSlideProps?: HTMLAttributes<any>;
+  visibleSlideProps?: HTMLAttributes<any>;
   autoplay?: boolean;
   autoplayDirection?: NavDirection;
   backwardBtnProps?: NavBtnProps;
@@ -47,7 +54,10 @@ type ReactSimplyCarouselStaticProps = {
     activeSlideIndex: number,
     deprecated_positionSlideIndex: number
   ) => void;
-  onRequestChange: (newActiveSlideIndex: number) => void;
+  onRequestChange: (
+    newActiveSlideIndex: number,
+    newVisibleSlidesState: VisibleSlidesState
+  ) => void;
   speed?: number;
   updateOnItemClick?: boolean;
   centerMode?: boolean;
@@ -67,6 +77,129 @@ type ReactSimplyCarouselResponsiveProps = (Omit<
 type ReactSimplyCarouselProps = ReactSimplyCarouselStaticProps & {
   responsiveProps?: ReactSimplyCarouselResponsiveProps;
 };
+
+function getSlidesHTMLElements({
+  infinite,
+  positionIndex,
+  itemsListRef,
+}: {
+  infinite: boolean;
+  positionIndex: number;
+  itemsListRef: RefObject<HTMLDivElement>;
+}) {
+  return infinite
+    ? ([...itemsListRef.current!.children].slice(
+        itemsListRef.current!.children.length / 3 - positionIndex,
+        itemsListRef.current!.children.length / 3 -
+          positionIndex +
+          itemsListRef.current!.children.length / 3
+      ) as HTMLElement[])
+    : ([...itemsListRef.current!.children] as HTMLElement[]);
+}
+
+function getVivisbleSidesItems({
+  activeSlideIndex,
+  itemsListRef,
+  innerRef,
+  offsetCorrectionForCenterMode,
+  offsetCorrectionForInfiniteMode,
+  infinite,
+  positionIndex,
+}: {
+  activeSlideIndex: number;
+  itemsListRef: RefObject<HTMLDivElement>;
+  innerRef: RefObject<HTMLDivElement>;
+  offsetCorrectionForCenterMode: number;
+  offsetCorrectionForInfiniteMode: number;
+  infinite: boolean;
+  positionIndex: number;
+}) {
+  const slidesHTMLElements = getSlidesHTMLElements({
+    infinite,
+    positionIndex,
+    itemsListRef,
+  });
+
+  const start = infinite
+    ? offsetCorrectionForInfiniteMode + offsetCorrectionForCenterMode
+    : Math.min(
+        itemsListRef.current!.offsetWidth - innerRef.current!.offsetWidth,
+        slidesHTMLElements.reduce((res, item, index) => {
+          if (index < activeSlideIndex) {
+            return res + item.offsetWidth;
+          }
+
+          return res;
+        }, 0)
+      );
+  const end = start + innerRef.current!.offsetWidth;
+
+  const slidesHTMLElementsInRender = infinite
+    ? [
+        ...slidesHTMLElements
+          .slice(activeSlideIndex)
+          .map((htmlElement, index) => ({
+            slideIndex: index + activeSlideIndex,
+            htmlElement,
+          })),
+        ...slidesHTMLElements.map((htmlElement, index) => ({
+          slideIndex: index,
+          htmlElement,
+        })),
+        ...slidesHTMLElements.map((htmlElement, index) => ({
+          slideIndex: index,
+          htmlElement,
+        })),
+        ...slidesHTMLElements
+          .slice(0, activeSlideIndex)
+          .map((htmlElement, index) => ({ slideIndex: index, htmlElement })),
+      ]
+    : slidesHTMLElements.map((htmlElement, index) => ({
+        slideIndex: index,
+        htmlElement,
+      }));
+
+  const visibilityItemsState = slidesHTMLElementsInRender.reduce(
+    (result, { slideIndex, htmlElement }) => {
+      const htmlElementWidth = htmlElement.offsetWidth;
+
+      if (
+        (result.summ >= start && result.summ < end) ||
+        (result.summ + htmlElementWidth > start &&
+          result.summ + htmlElementWidth <= end)
+      ) {
+        result.items.push({
+          slideIndex,
+          isFullyVisible:
+            result.summ + htmlElementWidth <= end && result.summ >= start,
+        });
+      }
+
+      // eslint-disable-next-line no-param-reassign
+      result.summ += htmlElementWidth;
+
+      return result;
+    },
+    {
+      summ: 0,
+      items: [] as { slideIndex: number; isFullyVisible: boolean }[],
+    }
+  );
+
+  const isFirstSlideVisible = !!visibilityItemsState.items.find(
+    (item) => item.slideIndex === 0
+  );
+
+  const isLastSlideVisible = !!visibilityItemsState.items.find(
+    (item) => item.slideIndex === slidesHTMLElements.length - 1
+  );
+
+  return {
+    visibleSlides: visibilityItemsState.items,
+    isFirstSlideVisible,
+    isLastSlideVisible,
+  };
+}
 
 function ReactSimplyCarousel({
   responsiveProps = [],
@@ -137,6 +270,11 @@ function ReactSimplyCarousel({
       style: activeSlideStyle = {},
       ...activeSlideProps
     } = {},
+    visibleSlideProps: {
+      className: visibleSlideClassName = '',
+      style: visibleSlideStyle = {},
+      ...visibleSlideProps
+    } = {},
     updateOnItemClick = false,
     activeSlideIndex,
     onRequestChange,
@@ -157,7 +295,7 @@ function ReactSimplyCarousel({
     disableNavIfEdgeActive = true,
     dotsNav = {},
     persistentChangeCallbacks = false,
-    showSlidesBeforeInit = false,
+    showSlidesBeforeInit = true,
   } = windowWidth
     ? {
         ...propsByWindowWidth,
@@ -183,37 +321,17 @@ function ReactSimplyCarousel({
     activeItemBtnProps: dotsNavActiveBtnProps = {},
   } = (dotsNav as DotsNav) || {};
 
-  const itemsListChilds = windowWidth
-    ? [...itemsListRef.current!.children]
-    : [];
-
-  const slides = useMemo(() => {
-    if (!windowWidth) {
-      return [];
-    }
-
-    if (infinite) {
-      return itemsListChilds.slice(
-        slidesItems.length - positionIndex,
-        slidesItems.length - positionIndex + slidesItems.length
-      ) as HTMLElement[];
-    }
-
-    return itemsListChilds as HTMLElement[];
-  }, [
-    positionIndex,
-    slidesItems.length,
-    windowWidth,
-    infinite,
-    itemsListChilds,
-  ]);
+  // eslint-disable-next-line no-nested-ternary
+  const slidesHTMLElements = !windowWidth
+    ? []
+    : getSlidesHTMLElements({ infinite, positionIndex, itemsListRef });
 
   const itemsListMaxTranslateX = windowWidth
     ? itemsListRef.current!.offsetWidth - innerRef.current!.offsetWidth
     : 0;
 
   const getItemsListOffsetBySlideIndex = (slideIndex: number) => {
-    const offsetByIndex = slides.reduce((total, item, index) => {
+    const offsetByIndex = slidesHTMLElements.reduce((total, item, index) => {
       if (index >= slideIndex) {
         return total;
       }
@@ -228,25 +346,23 @@ function ReactSimplyCarousel({
     return Math.min(itemsListMaxTranslateX, offsetByIndex);
   };
 
-  const innerMaxWidth = useMemo(
-    () =>
-      !windowWidth || !itemsToShow
-        ? 0
-        : slides.reduce((result, item, index) => {
-            const isItemVisible =
-              (index >= activeSlideIndex &&
-                index < activeSlideIndex + itemsToShow) ||
-              (index < activeSlideIndex &&
-                index < activeSlideIndex + itemsToShow - slides.length);
+  const innerMaxWidth =
+    !windowWidth || !itemsToShow
+      ? 0
+      : slidesHTMLElements.reduce((result, item, index) => {
+          const isItemVisible =
+            (index >= activeSlideIndex &&
+              index < activeSlideIndex + itemsToShow) ||
+            (index < activeSlideIndex &&
+              index <
+                activeSlideIndex + itemsToShow - slidesHTMLElements.length);
 
-            if (!isItemVisible) {
-              return result;
-            }
+          if (!isItemVisible) {
+            return result;
+          }
 
-            return result + item.offsetWidth;
-          }, 0),
-    [activeSlideIndex, itemsToShow, slides, windowWidth]
-  );
+          return result + item.offsetWidth;
+        }, 0);
 
   const lastSlideIndex = Children.count(children) - 1;
 
@@ -267,7 +383,7 @@ function ReactSimplyCarousel({
       : 0;
 
   const activeSlideWidth = windowWidth
-    ? slides[activeSlideIndex].offsetWidth
+    ? slidesHTMLElements[activeSlideIndex].offsetWidth
     : 0;
 
   const isCenterModeEnabled = centerMode && infinite;
@@ -281,13 +397,8 @@ function ReactSimplyCarousel({
         ) / 2
       : 0;
 
-  const slidesWidth = useMemo(() => {
-    if (infinite && windowWidth) {
-      return itemsListRef.current!.offsetWidth / 3;
-    }
-
-    return 0;
-  }, [windowWidth, infinite]);
+  const offsetCorrectionForInfiniteMode =
+    infinite && windowWidth ? itemsListRef.current!.offsetWidth / 3 : 0;
 
   const offsetCorrectionForEdgeSlides =
     // eslint-disable-next-line no-nested-ternary
@@ -296,10 +407,10 @@ function ReactSimplyCarousel({
       : // eslint-disable-next-line no-nested-ternary
       directionRef.current.toLowerCase() === 'forward' &&
         activeSlideIndex < positionIndex
-      ? slidesWidth
+      ? offsetCorrectionForInfiniteMode
       : directionRef.current.toLowerCase() === 'backward' &&
         activeSlideIndex > positionIndex
-      ? -slidesWidth
+      ? -offsetCorrectionForInfiniteMode
       : 0;
 
   const itemsListTransition =
@@ -313,10 +424,26 @@ function ReactSimplyCarousel({
         positionIndexOffset +
         offsetCorrectionForCenterMode +
         offsetCorrectionForEdgeSlides +
-        slidesWidth;
+        offsetCorrectionForInfiniteMode;
   const itemsListTransform = windowWidth
     ? `translateX(-${itemsListTranslateX}px)`
     : 'none';
+
+  const visibleSlidesState = windowWidth
+    ? getVivisbleSidesItems({
+        activeSlideIndex,
+        itemsListRef,
+        innerRef,
+        offsetCorrectionForCenterMode,
+        infinite,
+        positionIndex,
+        offsetCorrectionForInfiniteMode,
+      })
+    : ({
+        visibleSlides: [],
+        isFirstSlideVisible: false,
+        isLastSlideVisible: false,
+      } as VisibleSlidesState);
 
   const getNextSlideIndex = useCallback(
     (direction: NavDirection) => {
@@ -362,14 +489,25 @@ function ReactSimplyCarousel({
         persistentChangeCallbacks
       ) {
         clearTimeout(autoplayTimerRef.current);
-        onRequestChange(newActiveSlideIndex);
+
+        onRequestChange(
+          newActiveSlideIndex,
+          getVivisbleSidesItems({
+            activeSlideIndex: newActiveSlideIndex,
+            positionIndex,
+            infinite,
+            innerRef,
+            itemsListRef,
+            offsetCorrectionForCenterMode,
+            offsetCorrectionForInfiniteMode,
+          })
+        );
       } else {
         itemsListDragStartPosRef.current = 0;
-        isListDraggingRef.current = false;
 
         itemsListRef.current!.style.transform = `translateX(-${
           offsetCorrectionForCenterMode +
-          slidesWidth +
+          offsetCorrectionForInfiniteMode +
           (infinite ? 0 : itemsListTranslateX)
         }px)`;
       }
@@ -382,9 +520,10 @@ function ReactSimplyCarousel({
       easing,
       speed,
       onRequestChange,
-      slidesWidth,
+      offsetCorrectionForInfiniteMode,
       infinite,
       itemsListTranslateX,
+      positionIndex,
     ]
   );
 
@@ -439,7 +578,7 @@ function ReactSimplyCarousel({
         itemsListDragStartPosRef.current -
         dragPos +
         offsetCorrectionForCenterMode +
-        slidesWidth +
+        offsetCorrectionForInfiniteMode +
         (infinite ? 0 : itemsListTranslateX);
       const minDragPos = 0;
       const maxDragPos =
@@ -451,7 +590,12 @@ function ReactSimplyCarousel({
       itemsListRef.current!.style.transition = 'none';
       itemsListRef.current!.style.transform = `translateX(${itemsListPos}px)`;
     },
-    [offsetCorrectionForCenterMode, slidesWidth, infinite, itemsListTranslateX]
+    [
+      offsetCorrectionForCenterMode,
+      offsetCorrectionForInfiniteMode,
+      infinite,
+      itemsListTranslateX,
+    ]
   );
 
   const handleItemsListDragEnd = useCallback(
@@ -522,7 +666,7 @@ function ReactSimplyCarousel({
         onItemsListMouseDown(event);
       }
     },
-    [handleItemsListDrag, handleItemsListDragEnd]
+    [handleItemsListDrag, handleItemsListDragEnd, onItemsListMouseDown]
   );
 
   const handleItemsListTouchStart = useCallback(
@@ -540,7 +684,7 @@ function ReactSimplyCarousel({
         onItemsListTouchStart(event);
       }
     },
-    [handleItemsListDrag, handleItemsListDragEnd]
+    [handleItemsListDrag, handleItemsListDragEnd, onItemsListTouchStart]
   );
 
   const handleItemsListTransitionEnd = useCallback(
@@ -551,7 +695,7 @@ function ReactSimplyCarousel({
         onItemsListTransitionEnd(event);
       }
     },
-    [activeSlideIndex]
+    [activeSlideIndex, onItemsListTransitionEnd]
   );
 
   const handleForwardBtnClick = useCallback(() => {
@@ -610,12 +754,16 @@ function ReactSimplyCarousel({
         : 'backward';
 
       const isActive = index + startIndex === activeSlideIndex;
+      const isVisible = visibleSlidesState.visibleSlides.find(
+        (slide) => slide.slideIndex === index + startIndex
+      );
 
       const className = `${itemClassName} ${direction} ${
         isActive ? activeSlideClassName : ''
-      }`;
+      } ${isVisible ? visibleSlideClassName : ''}`;
       const style = {
         ...itemStyle,
+        ...(isVisible ? visibleSlideStyle : {}),
         ...(isActive ? activeSlideStyle : {}),
         boxSizing: 'border-box',
         margin: 0,
@@ -634,6 +782,7 @@ function ReactSimplyCarousel({
         style,
         onClick,
         ...itemComponentProps,
+        ...(isVisible ? visibleSlideProps : {}),
         ...(isActive ? activeSlideProps : {}),
       };
 
@@ -647,7 +796,9 @@ function ReactSimplyCarousel({
 
   useEffect(() => {
     itemsListDragStartPosRef.current = 0;
-    isListDraggingRef.current = false;
+    if (positionIndex === activeSlideIndex) {
+      isListDraggingRef.current = false;
+    }
     directionRef.current = '';
 
     if (activeSlideIndex !== positionIndex) {
@@ -692,6 +843,7 @@ function ReactSimplyCarousel({
     return () => {
       clearTimeout(autoplayTimerRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowWidth]);
 
   useEffect(() => {
@@ -731,10 +883,6 @@ function ReactSimplyCarousel({
   }, [handleItemsListDrag, handleItemsListDragEnd]);
 
   renderedSlidesCountRef.current = 0;
-
-  if (windowWidth) {
-    itemsListRef.current!.style.transform = itemsListTransform;
-  }
 
   return (
     <div
@@ -820,14 +968,20 @@ function ReactSimplyCarousel({
           role="presentation"
           ref={itemsListRef}
         >
-          {!disableNav &&
-            infinite &&
-            renderSlidesItems(slidesItems.slice(positionIndex), positionIndex)}
+          {infinite &&
+            renderSlidesItems(
+              slidesItems.slice(positionIndex),
+              positionIndex,
+              disableNav
+            )}
           {renderSlidesItems(slidesItems, 0, disableNav)}
-          {!disableNav && infinite && renderSlidesItems(slidesItems, 0)}
-          {!disableNav &&
-            infinite &&
-            renderSlidesItems(slidesItems.slice(0, positionIndex), 0)}
+          {infinite && renderSlidesItems(slidesItems, 0, disableNav)}
+          {infinite &&
+            renderSlidesItems(
+              slidesItems.slice(0, positionIndex),
+              0,
+              disableNav
+            )}
         </div>
       </div>
 

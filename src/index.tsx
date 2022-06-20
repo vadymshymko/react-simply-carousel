@@ -84,31 +84,31 @@ type ReactSimplyCarouselProps = ReactSimplyCarouselStaticProps & {
 
 function getSlidesHTMLElements({
   infinite,
-  positionIndex,
+  indexOfFirstSlideInDOM,
   itemsListRef,
 }: {
   infinite: boolean;
-  positionIndex: number;
+  indexOfFirstSlideInDOM: number;
   itemsListRef: RefObject<HTMLDivElement>;
 }) {
   return infinite
     ? ([...itemsListRef.current!.children].slice(
-        itemsListRef.current!.children.length / 3 - positionIndex,
+        itemsListRef.current!.children.length / 3 - indexOfFirstSlideInDOM,
         itemsListRef.current!.children.length / 3 -
-          positionIndex +
+          indexOfFirstSlideInDOM +
           itemsListRef.current!.children.length / 3
       ) as HTMLElement[])
     : ([...itemsListRef.current!.children] as HTMLElement[]);
 }
 
-function getVivisbleSidesItems({
+function getVisibleSidesItems({
   activeSlideIndex,
   itemsListRef,
   innerRef,
   offsetCorrectionForCenterMode,
   offsetCorrectionForInfiniteMode,
   infinite,
-  positionIndex,
+  indexOfFirstSlideInDOM,
   innerMaxWidth,
 }: {
   activeSlideIndex: number;
@@ -117,12 +117,12 @@ function getVivisbleSidesItems({
   offsetCorrectionForCenterMode: number;
   offsetCorrectionForInfiniteMode: number;
   infinite: boolean;
-  positionIndex: number;
+  indexOfFirstSlideInDOM: number;
   innerMaxWidth: number;
 }) {
   const slidesHTMLElements = getSlidesHTMLElements({
     infinite,
-    positionIndex,
+    indexOfFirstSlideInDOM,
     itemsListRef,
   });
 
@@ -334,7 +334,7 @@ function ReactSimplyCarousel({
     ? []
     : getSlidesHTMLElements({
         infinite,
-        positionIndex: firstRenderSlideIndexRef.current,
+        indexOfFirstSlideInDOM: firstRenderSlideIndexRef.current,
         itemsListRef,
       });
 
@@ -439,15 +439,15 @@ function ReactSimplyCarousel({
     : 'none';
 
   const visibleSlidesState = windowWidth
-    ? getVivisbleSidesItems({
+    ? getVisibleSidesItems({
         activeSlideIndex,
         itemsListRef,
         innerRef,
         offsetCorrectionForCenterMode,
         infinite,
-        positionIndex: firstRenderSlideIndexRef.current,
+        indexOfFirstSlideInDOM: firstRenderSlideIndexRef.current,
         offsetCorrectionForInfiniteMode,
-        innerMaxWidth: 0,
+        innerMaxWidth,
       })
     : {
         visibleSlides: [],
@@ -502,9 +502,9 @@ function ReactSimplyCarousel({
 
         onRequestChange(
           newActiveSlideIndex,
-          getVivisbleSidesItems({
+          getVisibleSidesItems({
             activeSlideIndex: newActiveSlideIndex,
-            positionIndex,
+            indexOfFirstSlideInDOM: positionIndex,
             infinite,
             innerRef,
             itemsListRef,

@@ -109,7 +109,7 @@ function getVisibleSidesItems({
   offsetCorrectionForInfiniteMode,
   infinite,
   indexOfFirstSlideInDOM,
-  innerMaxWidth,
+  itemsToShow,
 }: {
   activeSlideIndex: number;
   itemsListRef: RefObject<HTMLDivElement>;
@@ -118,7 +118,7 @@ function getVisibleSidesItems({
   offsetCorrectionForInfiniteMode: number;
   infinite: boolean;
   indexOfFirstSlideInDOM: number;
-  innerMaxWidth: number;
+  itemsToShow: number;
 }) {
   const slidesHTMLElements = getSlidesHTMLElements({
     infinite,
@@ -126,11 +126,26 @@ function getVisibleSidesItems({
     itemsListRef,
   });
 
+  const innerMaxWidth = itemsToShow
+    ? slidesHTMLElements.reduce((result, item, index) => {
+        const isItemVisible =
+          (index >= activeSlideIndex &&
+            index < activeSlideIndex + itemsToShow) ||
+          (index < activeSlideIndex &&
+            index < activeSlideIndex + itemsToShow - slidesHTMLElements.length);
+
+        if (!isItemVisible) {
+          return result;
+        }
+
+        return result + item.offsetWidth;
+      }, 0)
+    : innerRef.current!.offsetWidth;
+
   const start = infinite
     ? offsetCorrectionForInfiniteMode + offsetCorrectionForCenterMode
     : Math.min(
-        itemsListRef.current!.offsetWidth -
-          (innerMaxWidth || innerRef.current!.offsetWidth),
+        itemsListRef.current!.offsetWidth - innerMaxWidth,
         slidesHTMLElements.reduce((res, item, index) => {
           if (index < activeSlideIndex) {
             return res + item.offsetWidth;
@@ -139,7 +154,7 @@ function getVisibleSidesItems({
           return res;
         }, 0)
       );
-  const end = start + (innerMaxWidth || innerRef.current!.offsetWidth);
+  const end = start + innerMaxWidth;
 
   const slidesHTMLElementsInRender = infinite
     ? [
@@ -447,7 +462,7 @@ function ReactSimplyCarousel({
         infinite,
         indexOfFirstSlideInDOM: firstRenderSlideIndexRef.current,
         offsetCorrectionForInfiniteMode,
-        innerMaxWidth,
+        itemsToShow,
       })
     : {
         visibleSlides: [],
@@ -510,7 +525,7 @@ function ReactSimplyCarousel({
             itemsListRef,
             offsetCorrectionForCenterMode,
             offsetCorrectionForInfiniteMode,
-            innerMaxWidth,
+            itemsToShow,
           })
         );
       } else {
@@ -535,7 +550,7 @@ function ReactSimplyCarousel({
       infinite,
       itemsListTranslateX,
       positionIndex,
-      innerMaxWidth,
+      itemsToShow,
     ]
   );
 
@@ -967,7 +982,6 @@ function ReactSimplyCarousel({
             transition: itemsListTransition,
             transform: itemsListTransform,
           }}
-          data-transform={itemsListTransform}
           onTouchStart={!disableNav ? handleItemsListTouchStart : undefined}
           onMouseDown={!disableNav ? handleItemsListMouseDown : undefined}
           onTransitionEnd={

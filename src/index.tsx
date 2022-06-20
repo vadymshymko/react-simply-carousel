@@ -51,11 +51,15 @@ type ReactSimplyCarouselStaticProps = {
   itemsToScroll?: number;
   itemsToShow?: number;
   onAfterChange?: (
+    // eslint-disable-next-line no-unused-vars
     activeSlideIndex: number,
+    // eslint-disable-next-line no-unused-vars
     deprecated_positionSlideIndex: number
   ) => void;
   onRequestChange: (
+    // eslint-disable-next-line no-unused-vars
     newActiveSlideIndex: number,
+    // eslint-disable-next-line no-unused-vars
     newVisibleSlidesState: VisibleSlidesState
   ) => void;
   speed?: number;
@@ -299,7 +303,7 @@ function ReactSimplyCarousel({
     disableNavIfEdgeActive = true,
     dotsNav = {},
     persistentChangeCallbacks = false,
-    showSlidesBeforeInit = true,
+    // showSlidesBeforeInit = true,
   } = windowWidth
     ? {
         ...propsByWindowWidth,

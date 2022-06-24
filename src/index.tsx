@@ -81,203 +81,6 @@ type ReactSimplyCarouselProps = ReactSimplyCarouselStaticProps & {
   responsiveProps?: ReactSimplyCarouselResponsiveProps;
 };
 
-function getRenderParams({
-  infinite,
-  correctionSlideIndex,
-  prevCorrectionSlideIndex,
-  itemsListDOMElement,
-  curActiveSlideIndex,
-  itemsToShow,
-  innerDOMElement,
-  centerMode,
-  direction,
-  disableNav,
-}: {
-  infinite: boolean;
-  correctionSlideIndex: number;
-  prevCorrectionSlideIndex: number;
-  itemsListDOMElement: HTMLDivElement;
-  curActiveSlideIndex: number;
-  itemsToShow: number;
-  innerDOMElement: HTMLDivElement;
-  centerMode: boolean;
-  direction: NavDirection | '';
-  disableNav: boolean;
-}) {
-  const slidesHTMLElements = infinite
-    ? ([...itemsListDOMElement!.children].slice(
-        itemsListDOMElement!.children.length / 3 - prevCorrectionSlideIndex,
-        itemsListDOMElement!.children.length / 3 -
-          prevCorrectionSlideIndex +
-          itemsListDOMElement!.children.length / 3
-      ) as HTMLElement[])
-    : ([...itemsListDOMElement!.children] as HTMLElement[]);
-
-  const activeSlideWidth = slidesHTMLElements[curActiveSlideIndex].offsetWidth;
-
-  const innerMaxWidth = itemsToShow
-    ? slidesHTMLElements.reduce((result, item, index) => {
-        const isItemVisible =
-          (index >= curActiveSlideIndex &&
-            index < curActiveSlideIndex + itemsToShow) ||
-          (index < curActiveSlideIndex &&
-            index <
-              curActiveSlideIndex + itemsToShow - slidesHTMLElements.length);
-
-        if (!isItemVisible) {
-          return result;
-        }
-
-        return result + item.offsetWidth;
-      }, 0)
-    : innerDOMElement!.offsetWidth;
-
-  const itemsListMaxTranslateX =
-    itemsListDOMElement!.offsetWidth - innerMaxWidth;
-
-  const offsetCorrectionForCenterMode =
-    centerMode && infinite ? -(innerMaxWidth - activeSlideWidth) / 2 : 0;
-
-  const offsetCorrectionForInfiniteMode = infinite
-    ? itemsListDOMElement!.offsetWidth / 3
-    : 0;
-
-  const offsetCorrectionForEdgeSlides =
-    // eslint-disable-next-line no-nested-ternary
-    correctionSlideIndex - curActiveSlideIndex === 0
-      ? 0
-      : // eslint-disable-next-line no-nested-ternary
-      direction === 'forward' && curActiveSlideIndex < correctionSlideIndex
-      ? offsetCorrectionForInfiniteMode
-      : direction === 'backward' && curActiveSlideIndex > correctionSlideIndex
-      ? -offsetCorrectionForInfiniteMode
-      : 0;
-
-  const isNewSlideIndex = curActiveSlideIndex - correctionSlideIndex !== 0;
-
-  const getItemsListOffsetBySlideIndex = (slideIndex: number) => {
-    const offsetByIndex = slidesHTMLElements.reduce((total, item, index) => {
-      if (index >= slideIndex) {
-        return total;
-      }
-
-      return total + (item.offsetWidth || 0);
-    }, 0);
-
-    if (infinite) {
-      return offsetByIndex;
-    }
-
-    return Math.min(itemsListMaxTranslateX, offsetByIndex);
-  };
-
-  const positionIndexOffset =
-    isNewSlideIndex && infinite
-      ? getItemsListOffsetBySlideIndex(correctionSlideIndex)
-      : 0;
-  const activeSlideIndexOffset =
-    isNewSlideIndex || !infinite
-      ? getItemsListOffsetBySlideIndex(curActiveSlideIndex)
-      : 0;
-
-  const itemsListTranslateX = disableNav
-    ? 0
-    : activeSlideIndexOffset -
-      positionIndexOffset +
-      offsetCorrectionForCenterMode +
-      offsetCorrectionForEdgeSlides +
-      offsetCorrectionForInfiniteMode;
-  const itemsListTransform = `translateX(-${itemsListTranslateX}px)`;
-
-  const start = infinite
-    ? offsetCorrectionForInfiniteMode + offsetCorrectionForCenterMode
-    : Math.min(
-        itemsListDOMElement!.offsetWidth - innerMaxWidth,
-        slidesHTMLElements.reduce((res, item, index) => {
-          if (index < curActiveSlideIndex) {
-            return res + item.offsetWidth;
-          }
-
-          return res;
-        }, 0)
-      );
-  const end = start + innerMaxWidth;
-
-  const slidesHTMLElementsInRender = infinite
-    ? [
-        ...slidesHTMLElements
-          .slice(curActiveSlideIndex)
-          .map((htmlElement, index) => ({
-            slideIndex: index + curActiveSlideIndex,
-            htmlElement,
-          })),
-        ...slidesHTMLElements.map((htmlElement, index) => ({
-          slideIndex: index,
-          htmlElement,
-        })),
-        ...slidesHTMLElements.map((htmlElement, index) => ({
-          slideIndex: index,
-          htmlElement,
-        })),
-        ...slidesHTMLElements
-          .slice(0, curActiveSlideIndex)
-          .map((htmlElement, index) => ({ slideIndex: index, htmlElement })),
-      ]
-    : slidesHTMLElements.map((htmlElement, index) => ({
-        slideIndex: index,
-        htmlElement,
-      }));
-
-  const visibilityItemsState = slidesHTMLElementsInRender.reduce(
-    (result, { slideIndex, htmlElement }) => {
-      const htmlElementWidth = htmlElement.offsetWidth;
-
-      if (
-        (result.summ >= start && result.summ < end) ||
-        (result.summ + htmlElementWidth > start &&
-          result.summ + htmlElementWidth <= end)
-      ) {
-        result.items.push({
-          slideIndex,
-          isFullyVisible:
-            result.summ + htmlElementWidth <= end && result.summ >= start,
-        });
-      }
-
-      // eslint-disable-next-line no-param-reassign
-      result.summ += htmlElementWidth;
-
-      return result;
-    },
-    {
-      summ: 0,
-      items: [] as { slideIndex: number; isFullyVisible: boolean }[],
-    }
-  );
-
-  const isFirstSlideVisible = !!visibilityItemsState.items.find(
-    (item) => item.slideIndex === 0
-  );
-
-  const isLastSlideVisible = !!visibilityItemsState.items.find(
-    (item) => item.slideIndex === slidesHTMLElements.length - 1
-  );
-
-  return {
-    slidesHTMLElements,
-    innerMaxWidth,
-    itemsListMaxTranslateX,
-    activeSlideWidth,
-    offsetCorrectionForCenterMode,
-    offsetCorrectionForInfiniteMode,
-    itemsListTranslateX,
-    itemsListTransform,
-    visibleSlides: visibilityItemsState.items,
-    isFirstSlideVisible,
-    isLastSlideVisible,
-  };
-}
-
 function ReactSimplyCarousel({
   responsiveProps = [],
   ...props
@@ -408,6 +211,204 @@ function ReactSimplyCarousel({
       ? 'none'
       : `transform ${speed}ms ${easing} ${delay}ms`;
 
+  const getRenderParams = useCallback(
+    ({
+      correctionSlideIndex,
+      prevCorrectionSlideIndex,
+      curActiveSlideIndex,
+    }: {
+      correctionSlideIndex: number;
+      prevCorrectionSlideIndex: number;
+      curActiveSlideIndex: number;
+    }) => {
+      const slidesHTMLElements = infinite
+        ? ([...itemsListRef.current!.children].slice(
+            itemsListRef.current!.children.length / 3 -
+              prevCorrectionSlideIndex,
+            itemsListRef.current!.children.length / 3 -
+              prevCorrectionSlideIndex +
+              itemsListRef.current!.children.length / 3
+          ) as HTMLElement[])
+        : ([...itemsListRef.current!.children] as HTMLElement[]);
+
+      const activeSlideWidth =
+        slidesHTMLElements[curActiveSlideIndex].offsetWidth;
+
+      const innerMaxWidth = itemsToShow
+        ? slidesHTMLElements.reduce((result, item, index) => {
+            const isItemVisible =
+              (index >= curActiveSlideIndex &&
+                index < curActiveSlideIndex + itemsToShow) ||
+              (index < curActiveSlideIndex &&
+                index <
+                  curActiveSlideIndex +
+                    itemsToShow -
+                    slidesHTMLElements.length);
+
+            if (!isItemVisible) {
+              return result;
+            }
+
+            return result + item.offsetWidth;
+          }, 0)
+        : innerRef.current!.offsetWidth;
+
+      const itemsListMaxTranslateX =
+        itemsListRef.current!.offsetWidth - innerMaxWidth;
+
+      const offsetCorrectionForCenterMode =
+        centerMode && infinite ? -(innerMaxWidth - activeSlideWidth) / 2 : 0;
+
+      const offsetCorrectionForInfiniteMode = infinite
+        ? itemsListRef.current!.offsetWidth / 3
+        : 0;
+
+      const offsetCorrectionForEdgeSlides =
+        // eslint-disable-next-line no-nested-ternary
+        correctionSlideIndex - curActiveSlideIndex === 0
+          ? 0
+          : // eslint-disable-next-line no-nested-ternary
+          directionRef.current === 'forward' &&
+            curActiveSlideIndex < correctionSlideIndex
+          ? offsetCorrectionForInfiniteMode
+          : directionRef.current === 'backward' &&
+            curActiveSlideIndex > correctionSlideIndex
+          ? -offsetCorrectionForInfiniteMode
+          : 0;
+
+      const isNewSlideIndex = curActiveSlideIndex - correctionSlideIndex !== 0;
+
+      const getItemsListOffsetBySlideIndex = (slideIndex: number) => {
+        const offsetByIndex = slidesHTMLElements.reduce(
+          (total, item, index) => {
+            if (index >= slideIndex) {
+              return total;
+            }
+
+            return total + (item.offsetWidth || 0);
+          },
+          0
+        );
+
+        if (infinite) {
+          return offsetByIndex;
+        }
+
+        return Math.min(itemsListMaxTranslateX, offsetByIndex);
+      };
+
+      const positionIndexOffset =
+        isNewSlideIndex && infinite
+          ? getItemsListOffsetBySlideIndex(correctionSlideIndex)
+          : 0;
+      const activeSlideIndexOffset =
+        isNewSlideIndex || !infinite
+          ? getItemsListOffsetBySlideIndex(curActiveSlideIndex)
+          : 0;
+
+      const itemsListTranslateX = disableNav
+        ? 0
+        : activeSlideIndexOffset -
+          positionIndexOffset +
+          offsetCorrectionForCenterMode +
+          offsetCorrectionForEdgeSlides +
+          offsetCorrectionForInfiniteMode;
+      const itemsListTransform = `translateX(-${itemsListTranslateX}px)`;
+
+      const start = infinite
+        ? offsetCorrectionForInfiniteMode + offsetCorrectionForCenterMode
+        : Math.min(
+            itemsListRef.current!.offsetWidth - innerMaxWidth,
+            slidesHTMLElements.reduce((res, item, index) => {
+              if (index < curActiveSlideIndex) {
+                return res + item.offsetWidth;
+              }
+
+              return res;
+            }, 0)
+          );
+      const end = start + innerMaxWidth;
+
+      const slidesHTMLElementsInRender = infinite
+        ? [
+            ...slidesHTMLElements
+              .slice(curActiveSlideIndex)
+              .map((htmlElement, index) => ({
+                slideIndex: index + curActiveSlideIndex,
+                htmlElement,
+              })),
+            ...slidesHTMLElements.map((htmlElement, index) => ({
+              slideIndex: index,
+              htmlElement,
+            })),
+            ...slidesHTMLElements.map((htmlElement, index) => ({
+              slideIndex: index,
+              htmlElement,
+            })),
+            ...slidesHTMLElements
+              .slice(0, curActiveSlideIndex)
+              .map((htmlElement, index) => ({
+                slideIndex: index,
+                htmlElement,
+              })),
+          ]
+        : slidesHTMLElements.map((htmlElement, index) => ({
+            slideIndex: index,
+            htmlElement,
+          }));
+
+      const visibilityItemsState = slidesHTMLElementsInRender.reduce(
+        (result, { slideIndex, htmlElement }) => {
+          const htmlElementWidth = htmlElement.offsetWidth;
+
+          if (
+            (result.summ >= start && result.summ < end) ||
+            (result.summ + htmlElementWidth > start &&
+              result.summ + htmlElementWidth <= end)
+          ) {
+            result.items.push({
+              slideIndex,
+              isFullyVisible:
+                result.summ + htmlElementWidth <= end && result.summ >= start,
+            });
+          }
+
+          // eslint-disable-next-line no-param-reassign
+          result.summ += htmlElementWidth;
+
+          return result;
+        },
+        {
+          summ: 0,
+          items: [] as { slideIndex: number; isFullyVisible: boolean }[],
+        }
+      );
+
+      const isFirstSlideVisible = !!visibilityItemsState.items.find(
+        (item) => item.slideIndex === 0
+      );
+
+      const isLastSlideVisible = !!visibilityItemsState.items.find(
+        (item) => item.slideIndex === slidesHTMLElements.length - 1
+      );
+
+      return {
+        slidesHTMLElements,
+        innerMaxWidth,
+        itemsListMaxTranslateX,
+        activeSlideWidth,
+        offsetCorrectionForCenterMode,
+        offsetCorrectionForInfiniteMode,
+        itemsListTranslateX,
+        itemsListTransform,
+        visibleSlides: visibilityItemsState.items,
+        isFirstSlideVisible,
+        isLastSlideVisible,
+      };
+    },
+    [centerMode, disableNav, infinite, itemsToShow]
+  );
+
   const {
     innerMaxWidth = 0,
     itemsListMaxTranslateX = 0,
@@ -419,16 +420,9 @@ function ReactSimplyCarousel({
     visibleSlides = [],
   } = windowWidth
     ? getRenderParams({
-        infinite,
-        itemsListDOMElement: itemsListRef.current as HTMLDivElement,
         prevCorrectionSlideIndex: firstRenderSlideIndexRef.current,
-        itemsToShow,
         curActiveSlideIndex: activeSlideIndex,
-        innerDOMElement: innerRef.current as HTMLDivElement,
-        centerMode,
         correctionSlideIndex: positionIndex,
-        direction: directionRef.current,
-        disableNav,
       })
     : {};
 
@@ -482,16 +476,9 @@ function ReactSimplyCarousel({
           isFirstSlideVisible: nextIsFirstSlideVisible,
           isLastSlideVisible: nextIsLastSlideVisible,
         } = getRenderParams({
-          infinite,
           correctionSlideIndex: positionIndex,
           prevCorrectionSlideIndex: positionIndex,
           curActiveSlideIndex: newActiveSlideIndex,
-          itemsToShow,
-          itemsListDOMElement: itemsListRef.current as HTMLDivElement,
-          innerDOMElement: innerRef.current as HTMLDivElement,
-          centerMode,
-          disableNav,
-          direction: directionRef.current,
         });
 
         onRequestChange(newActiveSlideIndex, {
@@ -521,9 +508,7 @@ function ReactSimplyCarousel({
       infinite,
       itemsListTranslateX,
       positionIndex,
-      itemsToShow,
-      centerMode,
-      disableNav,
+      getRenderParams,
     ]
   );
 

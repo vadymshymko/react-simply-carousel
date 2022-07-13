@@ -9,5 +9,7 @@ jobs:
     steps:
       - uses: actions/stale@v5
         with:
+          days-before-stale: 14
+          days-before-close: 14
           stale-issue-message: ''
           stale-pr-message: ''

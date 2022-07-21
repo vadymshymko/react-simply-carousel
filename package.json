@@ -1,6 +1,6 @@
 {
   "name": "react-simply-carousel",
-  "version": "8.3.3",
+  "version": "8.3.4",
   "description": "A simple, lightweight, fully controlled isomorphic (with SSR support) React.js carousel component. Touch enabled and responsive. With support for autoplay and infinity options. Fully customizable",
   "files": [
     "dist/"

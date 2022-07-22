@@ -77,7 +77,7 @@ type ReactSimplyCarouselResponsiveProps = (Omit<
   'onRequestChange'
 > & { minWidth?: number; maxWidth?: number })[];
 
-type ReactSimplyCarouselProps = ReactSimplyCarouselStaticProps & {
+export type ReactSimplyCarouselProps = ReactSimplyCarouselStaticProps & {
   responsiveProps?: ReactSimplyCarouselResponsiveProps;
 };
 

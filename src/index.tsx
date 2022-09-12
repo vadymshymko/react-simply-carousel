@@ -70,6 +70,7 @@ type ReactSimplyCarouselStaticProps = {
   dotsNav?: DotsNav;
   persistentChangeCallbacks?: boolean;
   showSlidesBeforeInit?: boolean;
+  autoplayDelay?: number;
 };
 
 type ReactSimplyCarouselResponsiveProps = (Omit<
@@ -176,6 +177,7 @@ function ReactSimplyCarousel({
     disableNavIfEdgeActive = true,
     dotsNav = {},
     persistentChangeCallbacks = false,
+    autoplayDelay = 0,
     // showSlidesBeforeInit = true,
   } = windowWidth
     ? {
@@ -221,15 +223,18 @@ function ReactSimplyCarousel({
       prevCorrectionSlideIndex: number;
       curActiveSlideIndex: number;
     }) => {
+      const itemsListWidth = itemsListRef.current!.offsetWidth;
+      const itemsListChildren = itemsListRef.current!.children;
+      const itemsListChildrenCount = itemsListChildren.length;
+
       const slidesHTMLElements = infinite
-        ? ([...itemsListRef.current!.children].slice(
-            itemsListRef.current!.children.length / 3 -
-              prevCorrectionSlideIndex,
-            itemsListRef.current!.children.length / 3 -
+        ? ([...itemsListChildren].slice(
+            itemsListChildrenCount / 3 - prevCorrectionSlideIndex,
+            itemsListChildrenCount / 3 -
               prevCorrectionSlideIndex +
-              itemsListRef.current!.children.length / 3
+              itemsListChildrenCount / 3
           ) as HTMLElement[])
-        : ([...itemsListRef.current!.children] as HTMLElement[]);
+        : ([...itemsListChildren] as HTMLElement[]);
 
       const activeSlideWidth =
         slidesHTMLElements[curActiveSlideIndex].offsetWidth;
@@ -253,15 +258,12 @@ function ReactSimplyCarousel({
           }, 0)
         : innerRef.current!.offsetWidth;
 
-      const itemsListMaxTranslateX =
-        itemsListRef.current!.offsetWidth - innerMaxWidth;
+      const itemsListMaxTranslateX = itemsListWidth - innerMaxWidth;
 
       const offsetCorrectionForCenterMode =
         centerMode && infinite ? -(innerMaxWidth - activeSlideWidth) / 2 : 0;
 
-      const offsetCorrectionForInfiniteMode = infinite
-        ? itemsListRef.current!.offsetWidth / 3
-        : 0;
+      const offsetCorrectionForInfiniteMode = infinite ? itemsListWidth / 3 : 0;
 
       const offsetCorrectionForEdgeSlides =
         // eslint-disable-next-line no-nested-ternary
@@ -318,7 +320,7 @@ function ReactSimplyCarousel({
       const start = infinite
         ? offsetCorrectionForInfiniteMode + offsetCorrectionForCenterMode
         : Math.min(
-            itemsListRef.current!.offsetWidth - innerMaxWidth,
+            itemsListMaxTranslateX,
             slidesHTMLElements.reduce((res, item, index) => {
               if (index < curActiveSlideIndex) {
                 return res + item.offsetWidth;
@@ -329,6 +331,13 @@ function ReactSimplyCarousel({
           );
       const end = start + innerMaxWidth;
 
+      const slidesHTMLElementsDefault = slidesHTMLElements.map(
+        (htmlElement, index) => ({
+          slideIndex: index,
+          htmlElement,
+        })
+      );
+
       const slidesHTMLElementsInRender = infinite
         ? [
             ...slidesHTMLElements
@@ -337,14 +346,8 @@ function ReactSimplyCarousel({
                 slideIndex: index + curActiveSlideIndex,
                 htmlElement,
               })),
-            ...slidesHTMLElements.map((htmlElement, index) => ({
-              slideIndex: index,
-              htmlElement,
-            })),
-            ...slidesHTMLElements.map((htmlElement, index) => ({
-              slideIndex: index,
-              htmlElement,
-            })),
+            ...slidesHTMLElementsDefault,
+            ...slidesHTMLElementsDefault,
             ...slidesHTMLElements
               .slice(0, curActiveSlideIndex)
               .map((htmlElement, index) => ({
@@ -352,10 +355,7 @@ function ReactSimplyCarousel({
                 htmlElement,
               })),
           ]
-        : slidesHTMLElements.map((htmlElement, index) => ({
-            slideIndex: index,
-            htmlElement,
-          }));
+        : slidesHTMLElementsDefault;
 
       const visibilityItemsState = slidesHTMLElementsInRender.reduce(
         (result, { slideIndex, htmlElement }) => {
@@ -521,11 +521,12 @@ function ReactSimplyCarousel({
           getNextSlideIndex(autoplayDirection),
           autoplayDirection
         );
-      }, delay);
+      }, autoplayDelay || delay);
     }
   }, [
     autoplay,
     autoplayDirection,
+    autoplayDelay,
     updateActiveSlideIndex,
     getNextSlideIndex,
     delay,

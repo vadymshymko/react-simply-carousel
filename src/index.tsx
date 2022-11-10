@@ -435,7 +435,7 @@ function ReactSimplyCarousel({
         const newSlideIndex = isOnEnd
           ? infinite
             ? nextSlideIndex - lastSlideIndex - 1
-            : activeSlideIndex
+            : lastSlideIndex
           : nextSlideIndex;
 
         return newSlideIndex;
@@ -448,7 +448,7 @@ function ReactSimplyCarousel({
         const newSlideIndex = isOnStart
           ? infinite
             ? lastSlideIndex + 1 + nextSlideIndex
-            : activeSlideIndex
+            : 0
           : nextSlideIndex;
 
         return newSlideIndex;

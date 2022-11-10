@@ -435,7 +435,7 @@ function ReactSimplyCarousel({
         const newSlideIndex = isOnEnd
           ? infinite
             ? nextSlideIndex - lastSlideIndex - 1
-            : activeSlideIndex
+            : lastSlideIndex
           : nextSlideIndex;
 
         return newSlideIndex;
@@ -448,7 +448,7 @@ function ReactSimplyCarousel({
         const newSlideIndex = isOnStart
           ? infinite
             ? lastSlideIndex + 1 + nextSlideIndex
-            : activeSlideIndex
+            : 0
           : nextSlideIndex;
 
         return newSlideIndex;
@@ -1029,8 +1029,9 @@ function ReactSimplyCarousel({
               key={index}
               title={`${index}`}
               {...dotsNavBtnProps}
-              {...(Math.min(index * itemsToScroll, slidesItems.length - 1) ===
-              activeSlideIndex
+              {...(activeSlideIndex >= index * itemsToScroll &&
+              activeSlideIndex <
+                Math.min(itemsToScroll * (index + 1), lastSlideIndex + 1)
                 ? dotsNavActiveBtnProps
                 : {})}
               onClick={() => {

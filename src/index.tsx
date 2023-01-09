@@ -758,7 +758,7 @@ function ReactSimplyCarousel({
         ? 'forward'
         : 'backward';
 
-      const isActive = index + startIndex === activeSlideIndex;
+      const isActive: boolean = index + startIndex === activeSlideIndex;
       const isVisible = visibleSlides.find(
         (slide) => slide.slideIndex === index + startIndex
       );

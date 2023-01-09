@@ -87,5 +87,8 @@
   "lint-staged": {
     "*.{js,jsx,tsx}": "eslint --cache --fix",
     ".": "prettier --write"
+  },
+  "resolutions": {
+    "json5": "^2.2.2"
   }
 }

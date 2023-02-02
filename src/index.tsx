@@ -237,7 +237,7 @@ function ReactSimplyCarousel({
         : ([...itemsListChildren] as HTMLElement[]);
 
       const activeSlideWidth =
-        slidesHTMLElements[curActiveSlideIndex].offsetWidth;
+        slidesHTMLElements[curActiveSlideIndex]?.offsetWidth;
 
       const innerMaxWidth = itemsToShow
         ? slidesHTMLElements.reduce((result, item, index) => {

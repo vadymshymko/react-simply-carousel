@@ -93,8 +93,9 @@ function ReactSimplyCarousel({
   const innerRef = useRef<HTMLDivElement>(null);
   const itemsListRef = useRef<HTMLDivElement>(null);
 
-  const itemsListDragStartPosRef = useRef<number>(0);
+  const itemsListDragStartPosRef = useRef(0);
   const isListDraggingRef = useRef(false);
+  const isListTransitionBrokenRef = useRef(false);
 
   const directionRef = useRef<NavDirection | ''>('');
 
@@ -807,7 +808,7 @@ function ReactSimplyCarousel({
     directionRef.current = '';
 
     if (activeSlideIndex !== positionIndex) {
-      if (!speed && !delay) {
+      if ((!speed && !delay) || isListTransitionBrokenRef.current) {
         setPositionIndex(activeSlideIndex);
       }
     } else {
@@ -894,6 +895,8 @@ function ReactSimplyCarousel({
 
   renderedSlidesCountRef.current = 0;
   firstRenderSlideIndexRef.current = positionIndex;
+  isListTransitionBrokenRef.current =
+    itemsListRef.current?.style.transform === itemsListTransform;
 
   return (
     <div

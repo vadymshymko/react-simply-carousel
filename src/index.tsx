@@ -34,17 +34,22 @@ type VisibleSlidesState = {
 type ReactSimplyCarouselStaticProps = {
   activeSlideIndex: number;
   activeSlideProps?: HTMLAttributes<any>;
-  visibleSlideProps?: HTMLAttributes<any>;
   autoplay?: boolean;
+  autoplayDelay?: number;
   autoplayDirection?: NavDirection;
   backwardBtnProps?: NavBtnProps;
+  centerMode?: boolean;
   children?: ReactNode;
   containerProps?: HTMLAttributes<HTMLDivElement>;
   delay?: number;
   disableNavIfAllVisible?: boolean;
+  disableNavIfEdgeActive?: boolean;
+  disableNavIfEdgeVisible?: boolean;
+  dotsNav?: DotsNav;
   easing?: string;
   forwardBtnProps?: NavBtnProps;
   hideNavIfAllVisible?: boolean;
+  infinite?: boolean;
   innerProps?: HTMLAttributes<HTMLDivElement>;
   itemsListProps?: HTMLAttributes<HTMLDivElement>;
   itemsToScroll?: number;
@@ -61,16 +66,12 @@ type ReactSimplyCarouselStaticProps = {
     // eslint-disable-next-line no-unused-vars
     newVisibleSlidesState: VisibleSlidesState
   ) => void;
+  persistentChangeCallbacks?: boolean;
+  preventScrollXOnTouch?: boolean;
+  showSlidesBeforeInit?: boolean;
   speed?: number;
   updateOnItemClick?: boolean;
-  centerMode?: boolean;
-  infinite?: boolean;
-  disableNavIfEdgeVisible?: boolean;
-  disableNavIfEdgeActive?: boolean;
-  dotsNav?: DotsNav;
-  persistentChangeCallbacks?: boolean;
-  showSlidesBeforeInit?: boolean;
-  autoplayDelay?: number;
+  visibleSlideProps?: HTMLAttributes<any>;
 };
 
 type ReactSimplyCarouselResponsiveProps = (Omit<
@@ -179,7 +180,7 @@ function ReactSimplyCarousel({
     dotsNav = {},
     persistentChangeCallbacks = false,
     autoplayDelay = 0,
-    // showSlidesBeforeInit = true,
+    preventScrollXOnTouch = false,
   } = windowWidth
     ? {
         ...propsByWindowWidth,
@@ -907,6 +908,7 @@ function ReactSimplyCarousel({
         boxSizing: 'border-box',
         justifyContent: 'center',
         width: `100%`,
+        userSelect: 'none',
         ...containerStyle,
       }}
       {...containerProps}
@@ -946,7 +948,6 @@ function ReactSimplyCarousel({
           flexFlow: 'row wrap',
           padding: '0',
           overflow: 'hidden',
-          // eslint-disable-next-line no-nested-ternary
           maxWidth: innerMaxWidth ? `${innerMaxWidth}px` : undefined,
           flex: !innerMaxWidth ? `1 0` : undefined,
         }}
@@ -962,6 +963,7 @@ function ReactSimplyCarousel({
             outline: 'none',
             transition: itemsListTransition,
             transform: itemsListTransform,
+            touchAction: preventScrollXOnTouch ? 'none' : 'auto',
           }}
           onTouchStart={!disableNav ? handleItemsListTouchStart : undefined}
           onMouseDown={!disableNav ? handleItemsListMouseDown : undefined}

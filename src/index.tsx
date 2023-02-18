@@ -768,6 +768,10 @@ function ReactSimplyCarousel({
           }
         );
       }
+
+      if (!disableSwipeByMouse || !disableSwipeByTouch) {
+        listRef?.addEventListener('dragstart', handleListSwipeEnd as () => {});
+      }
     }
 
     return () => {
@@ -782,6 +786,7 @@ function ReactSimplyCarousel({
         'touchstart',
         handleListSwipeStart as () => {}
       );
+      listRef?.removeEventListener('dragstart', handleListSwipeEnd as () => {});
 
       document.removeEventListener('mousemove', handleListSwipe as () => {});
       document.removeEventListener('mouseup', handleListSwipeEnd as () => {});
@@ -887,7 +892,6 @@ function ReactSimplyCarousel({
         boxSizing: 'border-box',
         justifyContent: 'center',
         width: `100%`,
-        userSelect: 'none',
         ...containerStyle,
       }}
       {...containerProps}

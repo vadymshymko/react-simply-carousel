@@ -56,6 +56,8 @@ type ReactSimplyCarouselStaticProps = {
   itemsListProps?: HTMLAttributes<HTMLDivElement>;
   itemsToScroll?: number;
   itemsToShow?: number;
+  mouseSwipeRatio?: number;
+  mouseSwipeTreshold?: number;
   onAfterChange?: (
     // eslint-disable-next-line no-unused-vars
     activeSlideIndex: number,
@@ -72,6 +74,10 @@ type ReactSimplyCarouselStaticProps = {
   preventScrollOnSwipe?: boolean;
   showSlidesBeforeInit?: boolean;
   speed?: number;
+  swipeRatio?: number;
+  swipeTreshold?: number;
+  touchSwipeRatio?: number;
+  touchSwipeTreshold?: number;
   updateOnItemClick?: boolean;
   visibleSlideProps?: HTMLAttributes<any>;
 };
@@ -179,6 +185,12 @@ function ReactSimplyCarousel({
     preventScrollOnSwipe = false,
     disableSwipeByMouse = false,
     disableSwipeByTouch = false,
+    touchSwipeTreshold,
+    mouseSwipeTreshold,
+    swipeTreshold,
+    touchSwipeRatio,
+    mouseSwipeRatio,
+    swipeRatio = 1,
   } = windowWidth
     ? {
         ...propsByWindowWidth,
@@ -670,8 +682,8 @@ function ReactSimplyCarousel({
         : (event as MouseEvent).clientX;
 
       const dragPosDiff =
-        itemsListDragStartPosRef.current -
-        dragPos +
+        (itemsListDragStartPosRef.current - dragPos) *
+          ((isTouch ? touchSwipeRatio : mouseSwipeRatio) || swipeRatio) +
         offsetCorrectionForCenterMode +
         offsetCorrectionForInfiniteMode +
         (infinite ? 0 : itemsListTranslateX);
@@ -703,16 +715,25 @@ function ReactSimplyCarousel({
             ].clientX
           : (event as MouseEvent).clientX;
 
-        const mousePosDiff = itemsListDragStartPosRef.current - dragPos;
+        const mousePosDiff =
+          (itemsListDragStartPosRef.current - dragPos) *
+          ((isTouch ? touchSwipeRatio : mouseSwipeRatio) || swipeRatio);
+
+        const activeSlideHalfWidth = activeSlideWidth / 2;
+
+        const treshold =
+          (isTouch ? touchSwipeTreshold : mouseSwipeTreshold) ||
+          swipeTreshold ||
+          activeSlideHalfWidth;
 
         const nextActiveSlide =
           // eslint-disable-next-line no-nested-ternary
-          mousePosDiff > activeSlideWidth / 2
+          mousePosDiff > treshold
             ? {
                 index: getNextSlideIndex('forward'),
                 direction: 'forward',
               }
-            : mousePosDiff < -activeSlideWidth / 2
+            : mousePosDiff < -treshold
             ? {
                 index: getNextSlideIndex('backward'),
                 direction: 'backward',
@@ -806,6 +827,12 @@ function ReactSimplyCarousel({
     disableNav,
     disableSwipeByMouse,
     disableSwipeByTouch,
+    touchSwipeTreshold,
+    mouseSwipeTreshold,
+    swipeTreshold,
+    touchSwipeRatio,
+    mouseSwipeRatio,
+    swipeRatio,
   ]);
 
   useEffect(() => {

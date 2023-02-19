@@ -270,10 +270,12 @@ function ReactSimplyCarousel({
           }, 0)
         : innerRef.current!.offsetWidth;
 
-      const itemsListMaxTranslateX = itemsListWidth - innerMaxWidth;
+      const innerWidth = Math.min(innerMaxWidth, innerRef.current!.offsetWidth);
+
+      const itemsListMaxTranslateX = itemsListWidth - innerWidth;
 
       const offsetCorrectionForCenterMode =
-        centerMode && infinite ? -(innerMaxWidth - activeSlideWidth) / 2 : 0;
+        centerMode && infinite ? -(innerWidth - activeSlideWidth) / 2 : 0;
 
       const offsetCorrectionForInfiniteMode = infinite ? itemsListWidth / 3 : 0;
 
@@ -341,7 +343,7 @@ function ReactSimplyCarousel({
               return res;
             }, 0)
           );
-      const end = start + innerMaxWidth;
+      const end = start + innerWidth;
 
       const slidesHTMLElementsDefault = slidesHTMLElements.map(
         (htmlElement, index) => ({
@@ -687,13 +689,8 @@ function ReactSimplyCarousel({
         offsetCorrectionForCenterMode +
         offsetCorrectionForInfiniteMode +
         (infinite ? 0 : itemsListTranslateX);
-      const minDragPos = 0;
-      // todo: replace by itemsListMaxTranslateX
-      const maxDragPos = itemsListRef.current!.offsetWidth; // - innerRef.current!.offsetWidth;
-      const itemsListPos = Math.max(
-        Math.min(minDragPos, -dragPosDiff),
-        -maxDragPos
-      );
+      const maxDragPos = itemsListRef.current!.offsetWidth;
+      const itemsListPos = Math.max(-dragPosDiff, -maxDragPos);
       itemsListRef.current!.style.transition = 'none';
       itemsListRef.current!.style.transform = `translateX(${itemsListPos}px)`;
     }
@@ -960,6 +957,7 @@ function ReactSimplyCarousel({
           overflow: 'hidden',
           maxWidth: innerMaxWidth ? `${innerMaxWidth}px` : undefined,
           flex: !innerMaxWidth ? `1 0` : undefined,
+          width: '100%',
         }}
         ref={innerRef}
       >

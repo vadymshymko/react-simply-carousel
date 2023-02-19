@@ -949,6 +949,7 @@ function ReactSimplyCarousel({
       <div
         {...innerProps}
         style={{
+          width: '100%',
           ...innerStyle,
           display: 'flex',
           boxSizing: 'border-box',
@@ -957,7 +958,6 @@ function ReactSimplyCarousel({
           overflow: 'hidden',
           maxWidth: innerMaxWidth ? `${innerMaxWidth}px` : undefined,
           flex: !innerMaxWidth ? `1 0` : undefined,
-          width: '100%',
         }}
         ref={innerRef}
       >

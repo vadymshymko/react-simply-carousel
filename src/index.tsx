@@ -973,7 +973,6 @@ function ReactSimplyCarousel({
             transform: itemsListTransform,
             touchAction: preventScrollOnSwipe ? 'none' : 'auto',
           }}
-          data-transform={itemsListTransform}
           onTransitionEnd={
             speed || delay
               ? handleItemsListTransitionEnd

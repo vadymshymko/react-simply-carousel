@@ -25,7 +25,7 @@ type DotsNav = {
   activeItemBtnProps?: ButtonHTMLAttributes<HTMLButtonElement>;
 };
 
-type VisibleSlidesState = {
+export type VisibleSlidesState = {
   isFirstSlideVisible: boolean;
   isLastSlideVisible: boolean;
   visibleSlides: { slideIndex: number; isFullyVisible: boolean }[];

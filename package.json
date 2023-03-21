@@ -64,7 +64,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "husky": ">=6",
     "lint-staged": ">=13.1.0",
-    "prettier": "2.8.4",
+    "prettier": "2.8.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "rollup": "^3.13.0",

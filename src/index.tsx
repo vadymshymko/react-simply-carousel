@@ -235,6 +235,8 @@ function ReactSimplyCarousel({
       prevCorrectionSlideIndex: number;
       curActiveSlideIndex: number;
     }) => {
+      if (!itemsListRef.current) return {};
+
       const itemsListWidth = itemsListRef.current!.offsetWidth;
       const itemsListChildren = itemsListRef.current!.children;
       const itemsListChildrenCount = itemsListChildren.length;
@@ -503,12 +505,12 @@ function ReactSimplyCarousel({
           isMissingTransitionEndRef.current = true;
         }
 
-        itemsListRef.current!.style.transform = nextItemsListTransform;
+        itemsListRef.current!.style.transform = nextItemsListTransform as any;
 
         onRequestChange(newActiveSlideIndex, {
-          visibleSlides: nextVisibleSlides,
-          isFirstSlideVisible: nextIsFirstSlideVisible,
-          isLastSlideVisible: nextIsLastSlideVisible,
+          visibleSlides: nextVisibleSlides as any,
+          isFirstSlideVisible: nextIsFirstSlideVisible as any,
+          isLastSlideVisible: nextIsLastSlideVisible as any,
         });
       } else {
         itemsListRef.current!.style.transform = `translateX(-${

@@ -25,10 +25,15 @@ type DotsNav = {
   activeItemBtnProps?: ButtonHTMLAttributes<HTMLButtonElement>;
 };
 
+export interface VisibleSlide {
+  slideIndex: number;
+  isFullyVisible: boolean;
+}
+
 export type VisibleSlidesState = {
   isFirstSlideVisible: boolean;
   isLastSlideVisible: boolean;
-  visibleSlides: { slideIndex: number; isFullyVisible: boolean }[];
+  visibleSlides: VisibleSlide[];
 };
 
 type ReactSimplyCarouselStaticProps = {
@@ -396,7 +401,7 @@ function ReactSimplyCarousel({
         },
         {
           summ: 0,
-          items: [] as { slideIndex: number; isFullyVisible: boolean }[],
+          items: [] as VisibleSlide[],
         }
       );
 
@@ -505,12 +510,13 @@ function ReactSimplyCarousel({
           isMissingTransitionEndRef.current = true;
         }
 
-        itemsListRef.current!.style.transform = nextItemsListTransform as any;
+        itemsListRef.current!.style.transform =
+          nextItemsListTransform as string;
 
         onRequestChange(newActiveSlideIndex, {
-          visibleSlides: nextVisibleSlides as any,
-          isFirstSlideVisible: nextIsFirstSlideVisible as any,
-          isLastSlideVisible: nextIsLastSlideVisible as any,
+          visibleSlides: nextVisibleSlides as VisibleSlide[],
+          isFirstSlideVisible: Boolean(nextIsFirstSlideVisible),
+          isLastSlideVisible: Boolean(nextIsLastSlideVisible),
         });
       } else {
         itemsListRef.current!.style.transform = `translateX(-${

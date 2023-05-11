@@ -1,6 +1,6 @@
 {
   "name": "react-simply-carousel",
-  "version": "8.5.7",
+  "version": "9.0.0",
   "description": "A simple, lightweight, fully controlled isomorphic (with SSR support) React.js carousel component. Touch enabled and responsive. With support for autoplay and infinity options. Fully customizable",
   "files": [
     "dist/"
@@ -10,8 +10,7 @@
   "types": "dist/index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "build": "rm -rf dist && yarn lint && yarn generate-types && rollup -c",
-    "generate-types": "tsc --emitDeclarationOnly",
+    "build": "rm -rf dist && yarn lint && rollup -c",
     "lint": "eslint . --ext .tsx",
     "prepare": "husky install",
     "prepublish": "yarn build",
@@ -43,18 +42,14 @@
   },
   "homepage": "https://github.com/vadymshymko/react-simply-carousel#readme",
   "devDependencies": {
-    "@babel/cli": "^7.17.10",
-    "@babel/core": "^7.17.10",
-    "@babel/preset-env": "^7.20.2",
-    "@babel/preset-react": "^7.16.7",
-    "@babel/preset-typescript": "^7.18.6",
-    "@rollup/plugin-babel": "^6.0.3",
+    "@rollup/plugin-commonjs": "^24.1.0",
     "@rollup/plugin-node-resolve": "^15.0.1",
+    "@rollup/plugin-terser": "^0.4.1",
+    "@rollup/plugin-typescript": "^11.1.0",
     "@types/react": "^18.0.27",
     "@types/react-dom": "^18.0.10",
     "@typescript-eslint/eslint-plugin": "^5.50.0",
     "@typescript-eslint/parser": "^5.21.0",
-    "babel-plugin-transform-remove-console": "^6.9.4",
     "eslint": "^8.14.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^8.6.0",
@@ -68,11 +63,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "rollup": "^3.13.0",
-    "rollup-plugin-terser": "^7.0.2",
+    "tslib": "^2.5.0",
     "typescript": "^5.0.2"
-  },
-  "dependencies": {
-    "core-js": "^3.8.1"
   },
   "peerDependencies": {
     "@types/react": "^16.8 || ^17 || ^18",

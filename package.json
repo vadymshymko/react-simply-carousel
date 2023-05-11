@@ -10,10 +10,10 @@
   "types": "dist/index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "build": "rm -rf dist && yarn lint && yarn generate-types && rollup -c",
-    "generate-types": "tsc --emitDeclarationOnly",
+    "build": "rm -rf dist && yarn lint && rollup -c",
     "lint": "eslint . --ext .tsx",
     "prepare": "husky install",
+    "prepublish": "yarn build",
     "check-types": "tsc --noEmit"
   },
   "keywords": [

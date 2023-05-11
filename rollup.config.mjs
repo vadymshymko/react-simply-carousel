@@ -1,7 +1,9 @@
 /* eslint-disable import/no-extraneous-dependencies */
-import { nodeResolve } from '@rollup/plugin-node-resolve';
-import { terser } from 'rollup-plugin-terser';
-import babel from '@rollup/plugin-babel';
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import typescript from '@rollup/plugin-typescript';
+import terser from '@rollup/plugin-terser';
+// import babel from '@rollup/plugin-babel';
 
 export default {
   input: 'src/index.tsx',
@@ -22,10 +24,6 @@ export default {
       exports: 'auto',
     },
   ],
-  plugins: [
-    nodeResolve(),
-    babel({ babelHelpers: 'bundled', extensions: ['tsx'] }),
-    terser(),
-  ],
+  plugins: [resolve(), commonjs(), typescript(), terser()],
   external: ['react', 'react-dom'],
 };

@@ -1,7 +1,7 @@
 # react-simply-carousel
 
 [![npm version](https://img.shields.io/npm/v/react-simply-carousel)](https://www.npmjs.com/package/react-simply-carousel)
-[![minified + gzip](https://img.shields.io/bundlephobia/minzip/react-simply-carousel/latest)](https://bundlephobia.com/package/react-simply-carousel)
+[![minified + gzip](https://img.shields.io/bundlephobia/minzip/react-simply-carousel/latest)](https://bundlephobia.com/package/react-simply-carousel@latest)
 [![typescript](https://badgen.net/npm/types/react-simply-carousel)](https://unpkg.com/react-simply-carousel/dist/index.d.ts)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/vadymshymko/react-simply-carousel/blob/master/LICENSE)
 

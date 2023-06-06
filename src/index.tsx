@@ -957,7 +957,7 @@ function ReactSimplyCarousel({
           padding: '0',
           overflow: 'hidden',
           maxWidth: innerMaxWidth ? `${innerMaxWidth}px` : undefined,
-          flex: !innerMaxWidth ? `1 0` : undefined,
+          flex: !innerMaxWidth ? `1 0 auto` : undefined,
         }}
         ref={innerRef}
       >

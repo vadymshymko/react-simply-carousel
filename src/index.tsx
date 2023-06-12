@@ -217,7 +217,9 @@ function ReactSimplyCarousel({
   } = (dotsNav as DotsNav) || {};
 
   const lastSlideIndex = Children.count(children) - 1;
-  const isAllSlidesVisible = itemsToShow === slidesItems.length;
+  const isAllSlidesVisible =
+    !!windowWidth &&
+    innerRef.current?.offsetWidth! >= itemsListRef.current?.offsetWidth!;
   const hideNav = hideNavIfAllVisible && isAllSlidesVisible;
   const disableNav = disableNavIfAllVisible && isAllSlidesVisible;
   const itemsListTransition =

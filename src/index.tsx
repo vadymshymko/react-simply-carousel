@@ -888,7 +888,7 @@ function ReactSimplyCarousel({
 
       resizeTimerRef.current = setTimeout(() => {
         if (windowWidth !== window.innerWidth) {
-          setWindowWidth(window.innerWidth);
+          setWindowWidth(0);
         }
       }, 400);
     }

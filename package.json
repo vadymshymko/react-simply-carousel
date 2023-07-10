@@ -79,5 +79,8 @@
   "lint-staged": {
     "*.{js,jsx,tsx}": "eslint --cache --fix",
     ".": "prettier --write"
+  },
+  "resolutions": {
+    "semver": "^7.5.2"
   }
 }

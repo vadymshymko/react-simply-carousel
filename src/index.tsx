@@ -80,6 +80,7 @@ type ReactSimplyCarouselStaticProps = {
   touchSwipeTreshold?: number;
   updateOnItemClick?: boolean;
   visibleSlideProps?: HTMLAttributes<any>;
+  unstable_reverseByDir?: boolean;
 };
 
 type ReactSimplyCarouselResponsiveProps = (Omit<
@@ -191,6 +192,8 @@ function ReactSimplyCarousel({
     touchSwipeRatio,
     mouseSwipeRatio,
     swipeRatio = 1,
+    // eslint-disable-next-line camelcase
+    unstable_reverseByDir = false,
   } = windowWidth
     ? {
         ...propsByWindowWidth,
@@ -331,7 +334,12 @@ function ReactSimplyCarousel({
           offsetCorrectionForCenterMode +
           offsetCorrectionForEdgeSlides +
           offsetCorrectionForInfiniteMode;
-      const itemsListTransform = `translateX(-${itemsListTranslateX}px)`;
+      const itemsListTransform = `translateX(${
+        // eslint-disable-next-line camelcase
+        unstable_reverseByDir && windowWidth && document.body.dir === 'rtl'
+          ? ''
+          : '-'
+      }${itemsListTranslateX}px)`;
 
       const start = infinite
         ? offsetCorrectionForInfiniteMode + offsetCorrectionForCenterMode
@@ -422,7 +430,15 @@ function ReactSimplyCarousel({
         isLastSlideVisible,
       };
     },
-    [centerMode, disableNav, infinite, itemsToShow]
+    [
+      centerMode,
+      disableNav,
+      infinite,
+      itemsToShow,
+      // eslint-disable-next-line camelcase
+      unstable_reverseByDir,
+      windowWidth,
+    ]
   );
 
   const {
@@ -513,7 +529,12 @@ function ReactSimplyCarousel({
           isLastSlideVisible: nextIsLastSlideVisible,
         });
       } else {
-        itemsListRef.current!.style.transform = `translateX(-${
+        itemsListRef.current!.style.transform = `translateX(${
+          // eslint-disable-next-line camelcase
+          unstable_reverseByDir && windowWidth && document.body.dir === 'rtl'
+            ? ''
+            : '-'
+        }${
           offsetCorrectionForCenterMode +
           offsetCorrectionForInfiniteMode +
           (infinite ? 0 : itemsListTranslateX)
@@ -533,6 +554,9 @@ function ReactSimplyCarousel({
       itemsListTranslateX,
       positionIndex,
       getRenderParams,
+      // eslint-disable-next-line camelcase
+      unstable_reverseByDir,
+      windowWidth,
     ]
   );
 
@@ -694,7 +718,12 @@ function ReactSimplyCarousel({
       const maxDragPos = itemsListRef.current!.offsetWidth;
       const itemsListPos = Math.max(-dragPosDiff, -maxDragPos);
       itemsListRef.current!.style.transition = 'none';
-      itemsListRef.current!.style.transform = `translateX(${itemsListPos}px)`;
+      itemsListRef.current!.style.transform = `translateX(${
+        // eslint-disable-next-line camelcase
+        (unstable_reverseByDir && windowWidth && document.body.dir === 'rtl'
+          ? -1
+          : 1) * itemsListPos
+      }px)`;
     }
 
     function handleListSwipeEnd(event: TouchEvent | MouseEvent) {
@@ -832,6 +861,9 @@ function ReactSimplyCarousel({
     touchSwipeRatio,
     mouseSwipeRatio,
     swipeRatio,
+    // eslint-disable-next-line camelcase
+    unstable_reverseByDir,
+    windowWidth,
   ]);
 
   useEffect(() => {

@@ -681,6 +681,7 @@ function ReactSimplyCarousel({
     function preventClick(clickEvent: TouchEvent | MouseEvent) {
       clickEvent.preventDefault();
       clickEvent.stopPropagation();
+      clickEvent.target?.removeEventListener('click', preventClick as () => {});
     }
 
     function handleListSwipe(event: TouchEvent | MouseEvent) {

@@ -1,6 +1,6 @@
 {
   "name": "react-simply-carousel",
-  "version": "9.1.7",
+  "version": "9.1.8",
   "description": "A simple, lightweight, fully controlled isomorphic (with SSR support) React.js carousel component. Touch enabled and responsive. With support for autoplay and infinity options. Fully customizable",
   "files": [
     "dist/"
@@ -46,7 +46,7 @@
     "@rollup/plugin-node-resolve": "^15.0.1",
     "@rollup/plugin-terser": "^0.4.1",
     "@rollup/plugin-typescript": "^11.1.0",
-    "@types/react": "^18.0.27",
+    "@types/react": "^19.0.2",
     "@types/react-dom": "^18.0.10",
     "@typescript-eslint/eslint-plugin": "^5.50.0",
     "@typescript-eslint/parser": "^5.21.0",
@@ -60,16 +60,16 @@
     "husky": ">=6",
     "lint-staged": ">=13.1.0",
     "prettier": "3.3.3",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "rollup": "^4.9.2",
     "tslib": "^2.5.0",
     "typescript": "5.7.2"
   },
   "peerDependencies": {
-    "@types/react": "^16.8 || ^17 || ^18",
-    "react": "^16.8 || ^17 || ^18",
-    "react-dom": "^16.8 || ^17 || ^18"
+    "@types/react": "^16.8 || ^17 || ^18 || ^19",
+    "react": "^16.8 || ^17 || ^18 || ^19",
+    "react-dom": "^16.8 || ^17 || ^18 || ^19"
   },
   "peerDependenciesMeta": {
     "@types/react": {

@@ -64,7 +64,7 @@
     "react-dom": "^19.0.0",
     "rollup": "^4.9.2",
     "tslib": "^2.5.0",
-    "typescript": "5.8.3"
+    "typescript": "5.9.2"
   },
   "peerDependencies": {
     "@types/react": "^16.8 || ^17 || ^18 || ^19",

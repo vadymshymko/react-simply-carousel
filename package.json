@@ -42,7 +42,7 @@
   },
   "homepage": "https://github.com/vadymshymko/react-simply-carousel#readme",
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^28.0.1",
+    "@rollup/plugin-commonjs": "^29.0.0",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-terser": "^0.4.1",
     "@rollup/plugin-typescript": "^12.1.2",

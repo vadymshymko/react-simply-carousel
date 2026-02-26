@@ -10,10 +10,10 @@
   "types": "dist/index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "build": "rm -rf dist && yarn lint && rollup -c",
+    "build": "rm -rf dist && pnpm lint && rollup -c",
     "lint": "eslint . --ext .tsx",
     "prepare": "husky install",
-    "prepublish": "yarn build",
+    "prepublish": "pnpm build",
     "check-types": "tsc --noEmit"
   },
   "keywords": [

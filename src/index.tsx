@@ -683,18 +683,25 @@ function ReactSimplyCarousel({
       clickEvent.stopPropagation();
     }
 
-    function handleListSwipe(event: TouchEvent | MouseEvent) {
-      isListDraggingRef.current = true;
+    const DRAG_SLOP_PX = 5;
 
+    function handleListSwipe(event: TouchEvent | MouseEvent) {
       const isTouch = !!(event as TouchEvent).touches?.[0];
 
       const dragPos = isTouch
         ? (event as TouchEvent).touches?.[0].clientX
         : (event as MouseEvent).clientX;
 
+      const dxRaw = itemsListDragStartPosRef.current - dragPos;
+
+      if (!isListDraggingRef.current && Math.abs(dxRaw) <= DRAG_SLOP_PX) {
+        return;
+      }
+
+      isListDraggingRef.current = true;
+
       const dragPosDiff =
-        (itemsListDragStartPosRef.current - dragPos) *
-          ((isTouch ? touchSwipeRatio : mouseSwipeRatio) || swipeRatio) +
+        dxRaw * ((isTouch ? touchSwipeRatio : mouseSwipeRatio) || swipeRatio) +
         offsetCorrectionForCenterMode +
         offsetCorrectionForInfiniteMode +
         (infinite ? 0 : itemsListTranslateX);
@@ -725,7 +732,9 @@ function ReactSimplyCarousel({
           (itemsListDragStartPosRef.current - dragPos) *
           ((isTouch ? touchSwipeRatio : mouseSwipeRatio) || swipeRatio);
 
-        if (Math.abs(itemsListDragStartPosRef.current - dragPos) > 5) {
+        if (
+          Math.abs(itemsListDragStartPosRef.current - dragPos) > DRAG_SLOP_PX
+        ) {
           itemsListRef.current?.addEventListener('click', preventClick, {
             capture: true,
             once: true,
@@ -769,6 +778,8 @@ function ReactSimplyCarousel({
       clearTimeout(autoplayTimerRef.current);
 
       const isTouch = !!(event as TouchEvent).touches?.[0];
+
+      isListDraggingRef.current = false;
 
       itemsListDragStartPosRef.current = isTouch
         ? (event as TouchEvent).touches?.[0].clientX

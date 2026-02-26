@@ -678,6 +678,8 @@ function ReactSimplyCarousel({
   useEffect(() => {
     const listRef = itemsListRef.current;
 
+    const preventClickOptions = { capture: true, once: true };
+
     function preventClick(clickEvent: Event) {
       clickEvent.preventDefault();
       clickEvent.stopPropagation();
@@ -735,10 +737,12 @@ function ReactSimplyCarousel({
         if (
           Math.abs(itemsListDragStartPosRef.current - dragPos) > DRAG_SLOP_PX
         ) {
-          itemsListRef.current?.addEventListener('click', preventClick, {
-            capture: true,
-            once: true,
-          });
+          listRef?.removeEventListener(
+            'click',
+            preventClick,
+            preventClickOptions
+          );
+          listRef?.addEventListener('click', preventClick, preventClickOptions);
         }
 
         const activeSlideHalfWidth = activeSlideWidth / 2;
@@ -820,6 +824,7 @@ function ReactSimplyCarousel({
     return () => {
       isListDraggingRef.current = false;
       itemsListDragStartPosRef.current = 0;
+      listRef?.removeEventListener('click', preventClick, preventClickOptions);
 
       listRef?.removeEventListener(
         'mousedown',

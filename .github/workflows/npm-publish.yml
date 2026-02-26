@@ -48,4 +48,4 @@ jobs:
       - name: Install dependencies
         run: pnpm i --frozen-lockfile
 
-      - run: pnpm publish
+      - run: pnpm publish --no-git-checks

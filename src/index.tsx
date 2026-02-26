@@ -288,13 +288,13 @@ function ReactSimplyCarousel({
         correctionSlideIndex - curActiveSlideIndex === 0
           ? 0
           : // eslint-disable-next-line no-nested-ternary
-          directionRef.current === 'forward' &&
-            curActiveSlideIndex < correctionSlideIndex
-          ? offsetCorrectionForInfiniteMode
-          : directionRef.current === 'backward' &&
-            curActiveSlideIndex > correctionSlideIndex
-          ? -offsetCorrectionForInfiniteMode
-          : 0;
+            directionRef.current === 'forward' &&
+              curActiveSlideIndex < correctionSlideIndex
+            ? offsetCorrectionForInfiniteMode
+            : directionRef.current === 'backward' &&
+                curActiveSlideIndex > correctionSlideIndex
+              ? -offsetCorrectionForInfiniteMode
+              : 0;
 
       const isNewSlideIndex = curActiveSlideIndex - correctionSlideIndex !== 0;
 
@@ -630,8 +630,8 @@ function ReactSimplyCarousel({
           ? 'forward'
           : 'backward'
         : index >= activeSlideIndex
-        ? 'forward'
-        : 'backward';
+          ? 'forward'
+          : 'backward';
 
       const isActive: boolean = index + startIndex === activeSlideIndex;
       const isVisible = visibleSlides.find(
@@ -681,7 +681,6 @@ function ReactSimplyCarousel({
     function preventClick(clickEvent: TouchEvent | MouseEvent) {
       clickEvent.preventDefault();
       clickEvent.stopPropagation();
-      clickEvent.target?.removeEventListener('click', preventClick as () => {});
     }
 
     function handleListSwipe(event: TouchEvent | MouseEvent) {
@@ -714,7 +713,14 @@ function ReactSimplyCarousel({
       document.removeEventListener('touchend', handleListSwipeEnd as () => {});
 
       if (isListDraggingRef.current) {
-        event.target?.addEventListener('click', preventClick as () => {});
+        itemsListRef.current?.addEventListener(
+          'click',
+          preventClick as () => void,
+          {
+            capture: true,
+            once: true,
+          }
+        );
 
         const isTouch = !!(event as TouchEvent).changedTouches?.[0];
 
@@ -743,21 +749,19 @@ function ReactSimplyCarousel({
                 direction: 'forward',
               }
             : mousePosDiff < -treshold
-            ? {
-                index: getNextSlideIndex('backward'),
-                direction: 'backward',
-              }
-            : {
-                index: activeSlideIndex,
-                direction: 'forward',
-              };
+              ? {
+                  index: getNextSlideIndex('backward'),
+                  direction: 'backward',
+                }
+              : {
+                  index: activeSlideIndex,
+                  direction: 'forward',
+                };
 
         updateActiveSlideIndex(
           nextActiveSlide.index,
           nextActiveSlide.direction as NavDirection
         );
-      } else {
-        event.target?.removeEventListener('click', preventClick as () => {});
       }
       itemsListDragStartPosRef.current = 0;
       isListDraggingRef.current = false;

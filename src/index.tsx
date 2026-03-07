@@ -59,15 +59,11 @@ type ReactSimplyCarouselStaticProps = {
   mouseSwipeRatio?: number;
   mouseSwipeTreshold?: number;
   onAfterChange?: (
-    // eslint-disable-next-line no-unused-vars
     activeSlideIndex: number,
-    // eslint-disable-next-line no-unused-vars
     deprecated_positionSlideIndex: number
   ) => void;
   onRequestChange: (
-    // eslint-disable-next-line no-unused-vars
     newActiveSlideIndex: number,
-    // eslint-disable-next-line no-unused-vars
     newVisibleSlidesState: VisibleSlidesState
   ) => void;
   persistentChangeCallbacks?: boolean;
@@ -284,11 +280,9 @@ function ReactSimplyCarousel({
       const offsetCorrectionForInfiniteMode = infinite ? itemsListWidth / 3 : 0;
 
       const offsetCorrectionForEdgeSlides =
-        // eslint-disable-next-line no-nested-ternary
         correctionSlideIndex - curActiveSlideIndex === 0
           ? 0
-          : // eslint-disable-next-line no-nested-ternary
-            directionRef.current === 'forward' &&
+          : directionRef.current === 'forward' &&
               curActiveSlideIndex < correctionSlideIndex
             ? offsetCorrectionForInfiniteMode
             : directionRef.current === 'backward' &&
@@ -393,7 +387,6 @@ function ReactSimplyCarousel({
             });
           }
 
-          // eslint-disable-next-line no-param-reassign
           result.summ += htmlElementWidth;
 
           return result;
@@ -451,7 +444,6 @@ function ReactSimplyCarousel({
       if (direction === 'forward') {
         const nextSlideIndex = activeSlideIndex + itemsToScroll;
         const isOnEnd = nextSlideIndex > lastSlideIndex;
-        // eslint-disable-next-line no-nested-ternary
         const newSlideIndex = isOnEnd
           ? infinite
             ? nextSlideIndex - lastSlideIndex - 1
@@ -464,7 +456,6 @@ function ReactSimplyCarousel({
       if (direction === 'backward') {
         const nextSlideIndex = activeSlideIndex - itemsToScroll;
         const isOnStart = nextSlideIndex < 0;
-        // eslint-disable-next-line no-nested-ternary
         const newSlideIndex = isOnStart
           ? infinite
             ? lastSlideIndex + 1 + nextSlideIndex
@@ -624,7 +615,6 @@ function ReactSimplyCarousel({
         ...slideComponentData
       } = item;
 
-      // eslint-disable-next-line no-nested-ternary
       const direction = infinite
         ? renderedSlidesCountRef.current >= slidesItems.length
           ? 'forward'
@@ -753,7 +743,6 @@ function ReactSimplyCarousel({
           activeSlideHalfWidth;
 
         const nextActiveSlide =
-          // eslint-disable-next-line no-nested-ternary
           mousePosDiff > treshold
             ? {
                 index: getNextSlideIndex('forward'),
@@ -937,6 +926,7 @@ function ReactSimplyCarousel({
   // directionRef.current = "";
 
   renderedSlidesCountRef.current = 0;
+
   firstRenderSlideIndexRef.current = positionIndex;
 
   return (
@@ -992,7 +982,6 @@ function ReactSimplyCarousel({
         }}
         ref={innerRef}
       >
-        {/* eslint-disable-next-line jsx-a11y/mouse-events-have-key-events */}
         <div
           {...itemsListProps}
           style={{
@@ -1069,7 +1058,6 @@ function ReactSimplyCarousel({
           }).map((_item, index) => (
             <button
               type="button"
-              // eslint-disable-next-line react/no-array-index-key
               key={index}
               title={`${index}`}
               {...dotsNavBtnProps}

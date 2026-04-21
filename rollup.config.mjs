@@ -8,13 +8,8 @@ export default {
   input: 'src/index.tsx',
   output: [
     {
-      file: `dist/index.js`,
-      format: 'umd',
-      name: 'ReactSimplyCarousel',
-      globals: {
-        react: 'React',
-        'react-dom': 'ReactDOM',
-      },
+      file: 'dist/index.js',
+      format: 'cjs',
       exports: 'auto',
     },
     {
@@ -24,5 +19,5 @@ export default {
     },
   ],
   plugins: [resolve(), commonjs(), typescript(), terser()],
-  external: ['react', 'react-dom'],
+  external: ['react', 'react-dom', 'react/jsx-runtime'],
 };

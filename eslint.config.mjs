@@ -51,6 +51,7 @@ export default [
       ...js.configs.recommended.rules,
       ...tsPlugin.configs.recommended.rules,
       ...reactPlugin.configs.recommended.rules,
+      ...reactPlugin.configs['jsx-runtime'].rules,
       ...reactHooksPlugin.configs.recommended.rules,
       ...importPlugin.configs.recommended.rules,
       ...jsxA11yPlugin.configs.recommended.rules,
@@ -61,6 +62,19 @@ export default [
       'react/require-default-props': 'off',
       'react/jsx-props-no-spreading': 'off',
       'react/jsx-filename-extension': [1, { extensions: ['.tsx', '.jsx'] }],
+      'react-hooks/preserve-manual-memoization': 'warn',
+      'react-hooks/refs': 'warn',
+    },
+  },
+  {
+    files: ['src/**/*.test.{ts,tsx}'],
+    languageOptions: {
+      globals: {
+        ...globals.jest,
+      },
+    },
+    rules: {
+      'import/no-unresolved': 'off',
     },
   },
 ];

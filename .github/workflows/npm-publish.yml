@@ -8,7 +8,12 @@ on:
     types: [created]
 
 jobs:
+  quality-check:
+    uses: ./.github/workflows/quality-check.yml
+    secrets: inherit
+
   publish:
+    needs: quality-check
     runs-on: ubuntu-latest
     permissions:
       contents: read

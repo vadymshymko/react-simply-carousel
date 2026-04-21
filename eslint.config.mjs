@@ -61,6 +61,8 @@ export default [
       'react/require-default-props': 'off',
       'react/jsx-props-no-spreading': 'off',
       'react/jsx-filename-extension': [1, { extensions: ['.tsx', '.jsx'] }],
+      'react-hooks/preserve-manual-memoization': 'warn',
+      'react-hooks/refs': 'warn',
     },
   },
 ];

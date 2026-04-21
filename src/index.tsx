@@ -912,6 +912,7 @@ function ReactSimplyCarousel({
     }
 
     if (windowWidth !== window.innerWidth) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setWindowWidth(window.innerWidth);
     }
 

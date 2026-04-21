@@ -51,6 +51,7 @@ export default [
       ...js.configs.recommended.rules,
       ...tsPlugin.configs.recommended.rules,
       ...reactPlugin.configs.recommended.rules,
+      ...reactPlugin.configs['jsx-runtime'].rules,
       ...reactHooksPlugin.configs.recommended.rules,
       ...importPlugin.configs.recommended.rules,
       ...jsxA11yPlugin.configs.recommended.rules,

@@ -1,6 +1,6 @@
 {
   "name": "react-simply-carousel",
-  "version": "9.1.18",
+  "version": "10.0.0",
   "description": "A simple, lightweight, fully controlled isomorphic (with SSR support) React.js carousel component. Touch enabled and responsive. With support for autoplay and infinity options. Fully customizable",
   "files": [
     "dist/"
@@ -8,6 +8,14 @@
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "sideEffects": false,
   "scripts": {
     "build": "rm -rf dist && pnpm lint && rollup -c",
@@ -69,9 +77,9 @@
     "typescript": "6.0.3"
   },
   "peerDependencies": {
-    "@types/react": "^16.8 || ^17 || ^18 || ^19",
-    "react": "^16.8 || ^17 || ^18 || ^19",
-    "react-dom": "^16.8 || ^17 || ^18 || ^19"
+    "@types/react": "^17 || ^18 || ^19",
+    "react": "^17 || ^18 || ^19",
+    "react-dom": "^17 || ^18 || ^19"
   },
   "peerDependenciesMeta": {
     "@types/react": {

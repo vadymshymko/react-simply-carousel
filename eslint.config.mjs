@@ -66,4 +66,15 @@ export default [
       'react-hooks/refs': 'warn',
     },
   },
+  {
+    files: ['src/**/*.test.{ts,tsx}'],
+    languageOptions: {
+      globals: {
+        ...globals.jest,
+      },
+    },
+    rules: {
+      'import/no-unresolved': 'off',
+    },
+  },
 ];

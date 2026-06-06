@@ -101,6 +101,8 @@ function ReactSimplyCarousel({
   const isMissingTransitionEndRef = useRef(false);
 
   const itemsListDragStartPosRef = useRef(0);
+  const itemsListDragStartPosYRef = useRef(0);
+  const swipeAxisRef = useRef<'' | 'x' | 'y'>('');
   const isListDraggingRef = useRef(false);
 
   const directionRef = useRef<NavDirection | ''>('');
@@ -686,6 +688,28 @@ function ReactSimplyCarousel({
 
       const dxRaw = itemsListDragStartPosRef.current - dragPos;
 
+      // On touch, lock the gesture to its dominant axis once it passes the
+      // slop. A mostly-vertical move locks to 'y' so the carousel ignores it
+      // and the page can scroll normally instead of being hijacked by a
+      // slight horizontal jitter.
+      if (isTouch && swipeAxisRef.current === '') {
+        const dragPosY = (event as TouchEvent).touches?.[0].clientY;
+        const dyRaw = itemsListDragStartPosYRef.current - dragPosY;
+
+        if (
+          Math.abs(dxRaw) <= DRAG_SLOP_PX &&
+          Math.abs(dyRaw) <= DRAG_SLOP_PX
+        ) {
+          return;
+        }
+
+        swipeAxisRef.current = Math.abs(dxRaw) > Math.abs(dyRaw) ? 'x' : 'y';
+      }
+
+      if (swipeAxisRef.current === 'y') {
+        return;
+      }
+
       if (!isListDraggingRef.current && Math.abs(dxRaw) <= DRAG_SLOP_PX) {
         return;
       }
@@ -764,6 +788,8 @@ function ReactSimplyCarousel({
         );
       }
       itemsListDragStartPosRef.current = 0;
+      itemsListDragStartPosYRef.current = 0;
+      swipeAxisRef.current = '';
       isListDraggingRef.current = false;
     }
 
@@ -773,10 +799,14 @@ function ReactSimplyCarousel({
       const isTouch = !!(event as TouchEvent).touches?.[0];
 
       isListDraggingRef.current = false;
+      swipeAxisRef.current = '';
 
       itemsListDragStartPosRef.current = isTouch
         ? (event as TouchEvent).touches?.[0].clientX
         : (event as MouseEvent).clientX;
+      itemsListDragStartPosYRef.current = isTouch
+        ? (event as TouchEvent).touches?.[0].clientY
+        : (event as MouseEvent).clientY;
 
       if (isTouch) {
         document.addEventListener('touchmove', handleListSwipe as () => {});
@@ -813,6 +843,8 @@ function ReactSimplyCarousel({
     return () => {
       isListDraggingRef.current = false;
       itemsListDragStartPosRef.current = 0;
+      itemsListDragStartPosYRef.current = 0;
+      swipeAxisRef.current = '';
       listRef?.removeEventListener('click', preventClick, preventClickOptions);
 
       listRef?.removeEventListener(
@@ -973,6 +1005,7 @@ function ReactSimplyCarousel({
         style={{
           width: '100%',
           ...innerStyle,
+          direction: dirRTL ? 'rtl' : undefined,
           display: 'flex',
           boxSizing: 'border-box',
           flexFlow: 'row wrap',

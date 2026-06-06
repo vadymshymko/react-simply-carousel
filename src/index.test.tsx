@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import Carousel, { type ReactSimplyCarouselProps } from './index';
@@ -163,5 +163,92 @@ describe('ReactSimplyCarousel', () => {
     );
     const btn = screen.getByRole('button', { name: 'go-next' });
     expect(btn).toHaveClass('fwd-btn');
+  });
+
+  describe('touch swipe axis lock', () => {
+    const getItemsList = () =>
+      document.querySelector('[role="presentation"]') as HTMLElement;
+
+    it('requests a slide change on a horizontal swipe', () => {
+      const onRequestChange = jest.fn();
+      render(<Harness onRequestChange={onRequestChange} />);
+      const list = getItemsList();
+
+      fireEvent.touchStart(list, { touches: [{ clientX: 200, clientY: 100 }] });
+      fireEvent.touchMove(document, {
+        touches: [{ clientX: 100, clientY: 105 }],
+      });
+      fireEvent.touchEnd(document, {
+        changedTouches: [{ clientX: 100, clientY: 105 }],
+      });
+
+      expect(onRequestChange).toHaveBeenCalled();
+    });
+
+    it('ignores a mostly-vertical move so the page can scroll', () => {
+      const onRequestChange = jest.fn();
+      render(<Harness onRequestChange={onRequestChange} />);
+      const list = getItemsList();
+
+      fireEvent.touchStart(list, { touches: [{ clientX: 100, clientY: 200 }] });
+      fireEvent.touchMove(document, {
+        touches: [{ clientX: 108, clientY: 100 }],
+      });
+      fireEvent.touchEnd(document, {
+        changedTouches: [{ clientX: 108, clientY: 100 }],
+      });
+
+      expect(onRequestChange).not.toHaveBeenCalled();
+    });
+
+    it('keeps the gesture locked to vertical even if it later drifts horizontally', () => {
+      const onRequestChange = jest.fn();
+      render(<Harness onRequestChange={onRequestChange} />);
+      const list = getItemsList();
+
+      fireEvent.touchStart(list, { touches: [{ clientX: 100, clientY: 200 }] });
+      // First move is vertical-dominant → locks to 'y'.
+      fireEvent.touchMove(document, {
+        touches: [{ clientX: 104, clientY: 100 }],
+      });
+      // Later horizontal drift must stay ignored.
+      fireEvent.touchMove(document, {
+        touches: [{ clientX: 250, clientY: 90 }],
+      });
+      fireEvent.touchEnd(document, {
+        changedTouches: [{ clientX: 250, clientY: 90 }],
+      });
+
+      expect(onRequestChange).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('dirRTL (right-to-left)', () => {
+    const getInner = () =>
+      document.querySelector('[role="presentation"]')!.parentElement as HTMLElement;
+
+    it('lays the viewport out right-to-left so slides are not pushed off-screen', () => {
+      render(<Harness dirRTL />);
+      // Without direction:rtl the positive translateX shifts the list out of
+      // the viewport (issues #248/#250). The inner viewport must be rtl so the
+      // list is right-anchored and the slides stay visible.
+      expect(getInner().style.direction).toBe('rtl');
+    });
+
+    it('does not force rtl direction in LTR mode', () => {
+      render(<Harness />);
+      expect(getInner().style.direction).toBe('');
+    });
+
+    it('forward navigation still requests the next slide index in RTL', async () => {
+      const user = userEvent.setup();
+      const onRequestChange = jest.fn();
+      render(<Harness dirRTL onRequestChange={onRequestChange} />);
+
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+
+      expect(onRequestChange).toHaveBeenCalledTimes(1);
+      expect(onRequestChange.mock.calls[0][0]).toBe(1);
+    });
   });
 });

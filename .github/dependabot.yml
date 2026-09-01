@@ -5,14 +5,32 @@
 
 version: 2
 updates:
-  # npm packages
+  # npm packages — every update lands in a single grouped pull request
   - package-ecosystem: 'npm' # See documentation for possible values
     directory: '/' # Location of package manifests
     schedule:
       interval: 'monthly'
+    groups:
+      npm:
+        applies-to: version-updates
+        patterns:
+          - '*'
+        update-types:
+          - 'major'
+          - 'minor'
+          - 'patch'
 
-  # GitHub Actions used in workflows
+  # GitHub Actions used in workflows — likewise, one grouped pull request
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
       interval: 'monthly'
+    groups:
+      github-actions:
+        applies-to: version-updates
+        patterns:
+          - '*'
+        update-types:
+          - 'major'
+          - 'minor'
+          - 'patch'

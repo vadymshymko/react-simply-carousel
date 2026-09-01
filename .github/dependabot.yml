@@ -5,7 +5,10 @@
 
 version: 2
 updates:
-  # npm packages — every update lands in a single grouped pull request
+  # npm packages. Minor and patch updates are collapsed into a single grouped
+  # pull request; majors are deliberately left out of the group, so each one
+  # arrives as its own pull request and can be reviewed — or ignored — on its
+  # own without holding up the routine updates.
   - package-ecosystem: 'npm' # See documentation for possible values
     directory: '/' # Location of package manifests
     schedule:
@@ -16,11 +19,10 @@ updates:
         patterns:
           - '*'
         update-types:
-          - 'major'
           - 'minor'
           - 'patch'
 
-  # GitHub Actions used in workflows — likewise, one grouped pull request
+  # GitHub Actions used in workflows — split the same way.
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
@@ -31,6 +33,5 @@ updates:
         patterns:
           - '*'
         update-types:
-          - 'major'
           - 'minor'
           - 'patch'
